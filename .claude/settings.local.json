@@ -1,0 +1,13 @@
+{
+  "enabledPlugins": {
+    "glm-plan-usage@zai-coding-plugins": true,
+    "glm-plan-bug@zai-coding-plugins": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Edit",
+      "Bash(go:*)"
+    ]
+  }
+}
