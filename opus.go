@@ -191,26 +191,7 @@ func applyAbs(end bool, u, p Unit, n, y, m, d, h, mm, sec int, w, startsAt time.
 		}
 	}
 
-	if u == Quarter || u == Month { // 只有这两个分支会改变月份
-		y, m = addMonth(y, m, 0)
-	}
-
-	if u == Century || u == Decade || u == Year || u == Quarter || u == Month {
-		// 仅针对这些时间单元做天数溢出处理
-		if dd := DaysIn(y, m); d > dd {
-			d = dd
-		}
-	}
-
-	if end {
-		if u == Quarter {
-			m += 2
-		} else if u == Week || u == ISOYearWeek || u == YearWeek {
-			d += 6
-		}
-	}
-
-	w = weekday(y, m, d)
+	y, m, d, w = final(end, false, true, u, y, m, d)
 	return y, m, d, h, mm, sec, w
 }
 
@@ -258,9 +239,14 @@ func applyRel(end, overflow bool, u, p Unit, n, y, m, d, h, mm, sec int, w, star
 		}
 	}
 
-	// if u == Quarter || u == Month { // 只有这两个分支会改变月份
-	// 	y, m = addMonth(y, m, 0)
-	// }
+	y, m, d, w = final(end, overflow, false, u, y, m, d)
+	return y, m, d, h, mm, sec, w
+}
+
+func final(end, overflow, abs bool, u Unit, y, m, d int) (int, int, int, time.Weekday) {
+	if abs && (u == Quarter || u == Month) { // 只有这两个分支会改变月份
+		y, m = addMonth(y, m, 0)
+	}
 
 	if u == Century || u == Decade || u == Year || u == Quarter || u == Month || overflow {
 		// 仅针对这些时间单元做天数溢出处理
@@ -277,8 +263,7 @@ func applyRel(end, overflow bool, u, p Unit, n, y, m, d, h, mm, sec int, w, star
 		}
 	}
 
-	w = weekday(y, m, d)
-	return y, m, d, h, mm, sec, w
+	return y, m, d, weekday(y, m, d)
 }
 
 // align 执行最终的时间分量对齐（归零或置满）
