@@ -23,6 +23,7 @@ func TestAbsSeriesDevilMatrix(t *testing.T) {
 		// 1. Start 归零对齐
 		assert(t, base.StartYear(0), "2024-01-01 00:00:00", "StartYear(0) 归零")
 		assert(t, base.StartMonth(0), "2024-04-01 00:00:00", "StartMonth(0) 归零")
+		assert(t, base.StartDecade(1), "2010-01-01 00:00:00", "StartDecade(1) 锚定本世纪第1个年代")
 
 		// 2. End 置满扩张 (含 Decade/Century 修复验证)
 		assert(t, base.EndYear(0), "2024-12-31 23:59:59", "EndYear(0) 置满")

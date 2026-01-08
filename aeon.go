@@ -29,8 +29,8 @@ type from int
 const (
 	fromAbs from = iota // Start/End (全绝对)
 	fromRel             // StartBy/EndBy (全相对)
-	fromAt              // StartAt/EndAt (绝对定位后偏移: Abs + Rel..)
-	fromIn              // StartIn/EndIn (偏移后绝对定位: Rel + Abs..)
+	fromAt              // StartAt/EndAt (定位后偏移: Abs + Rel..)
+	fromIn              // StartIn/EndIn (偏移后定位: Rel + Abs..)
 )
 
 const (
@@ -285,7 +285,59 @@ func (t Time) EndByYearWeek(n ...int) Time { return t.cascade(fromRel, true, Yea
 
 // ---- 锚位（绝对）后偏移级联 ----
 
+func (t Time) StartAt(n ...int) Time         { return t.cascade(fromAt, false, Century, n...) }
+func (t Time) StartAtDecade(n ...int) Time   { return t.cascade(fromAt, false, Decade, n...) }
+func (t Time) StartAtYear(n ...int) Time     { return t.cascade(fromAt, false, Year, n...) }
+func (t Time) StartAtMonth(n ...int) Time    { return t.cascade(fromAt, false, Month, n...) }
+func (t Time) StartAtDay(n ...int) Time      { return t.cascade(fromAt, false, Day, n...) }
+func (t Time) StartAtHour(n ...int) Time     { return t.cascade(fromAt, false, Hour, n...) }
+func (t Time) StartAtMinute(n ...int) Time   { return t.cascade(fromAt, false, Minute, n...) }
+func (t Time) StartAtSecond(n ...int) Time   { return t.cascade(fromAt, false, Second, n...) }
+func (t Time) StartAtQuarter(n ...int) Time  { return t.cascade(fromAt, false, Quarter, n...) }
+func (t Time) StartAtWeek(n ...int) Time     { return t.cascade(fromAt, false, Week, n...) }
+func (t Time) StartAtWeekday(n ...int) Time  { return t.cascade(fromAt, false, Weekday, n...) }
+func (t Time) StartAtYearWeek(n ...int) Time { return t.cascade(fromAt, false, YearWeek, n...) }
+
+func (t Time) EndAt(n ...int) Time         { return t.cascade(fromAt, true, Century, n...) }
+func (t Time) EndAtDecade(n ...int) Time   { return t.cascade(fromAt, true, Decade, n...) }
+func (t Time) EndAtYear(n ...int) Time     { return t.cascade(fromAt, true, Year, n...) }
+func (t Time) EndAtMonth(n ...int) Time    { return t.cascade(fromAt, true, Month, n...) }
+func (t Time) EndAtDay(n ...int) Time      { return t.cascade(fromAt, true, Day, n...) }
+func (t Time) EndAtHour(n ...int) Time     { return t.cascade(fromAt, true, Hour, n...) }
+func (t Time) EndAtMinute(n ...int) Time   { return t.cascade(fromAt, true, Minute, n...) }
+func (t Time) EndAtSecond(n ...int) Time   { return t.cascade(fromAt, true, Second, n...) }
+func (t Time) EndAtQuarter(n ...int) Time  { return t.cascade(fromAt, true, Quarter, n...) }
+func (t Time) EndAtWeek(n ...int) Time     { return t.cascade(fromAt, true, Week, n...) }
+func (t Time) EndAtWeekday(n ...int) Time  { return t.cascade(fromAt, true, Weekday, n...) }
+func (t Time) EndAtYearWeek(n ...int) Time { return t.cascade(fromAt, true, YearWeek, n...) }
+
 // ---- 偏移后锚位（绝对）级联 ----
+
+func (t Time) StartIn(n ...int) Time         { return t.cascade(fromIn, false, Century, n...) }
+func (t Time) StartInDecade(n ...int) Time   { return t.cascade(fromIn, false, Decade, n...) }
+func (t Time) StartInYear(n ...int) Time     { return t.cascade(fromIn, false, Year, n...) }
+func (t Time) StartInMonth(n ...int) Time    { return t.cascade(fromIn, false, Month, n...) }
+func (t Time) StartInDay(n ...int) Time      { return t.cascade(fromIn, false, Day, n...) }
+func (t Time) StartInHour(n ...int) Time     { return t.cascade(fromIn, false, Hour, n...) }
+func (t Time) StartInMinute(n ...int) Time   { return t.cascade(fromIn, false, Minute, n...) }
+func (t Time) StartInSecond(n ...int) Time   { return t.cascade(fromIn, false, Second, n...) }
+func (t Time) StartInQuarter(n ...int) Time  { return t.cascade(fromIn, false, Quarter, n...) }
+func (t Time) StartInWeek(n ...int) Time     { return t.cascade(fromIn, false, Week, n...) }
+func (t Time) StartInWeekday(n ...int) Time  { return t.cascade(fromIn, false, Weekday, n...) }
+func (t Time) StartInYearWeek(n ...int) Time { return t.cascade(fromIn, false, YearWeek, n...) }
+
+func (t Time) EndIn(n ...int) Time         { return t.cascade(fromIn, true, Century, n...) }
+func (t Time) EndInDecade(n ...int) Time   { return t.cascade(fromIn, true, Decade, n...) }
+func (t Time) EndInYear(n ...int) Time     { return t.cascade(fromIn, true, Year, n...) }
+func (t Time) EndInMonth(n ...int) Time    { return t.cascade(fromIn, true, Month, n...) }
+func (t Time) EndInDay(n ...int) Time      { return t.cascade(fromIn, true, Day, n...) }
+func (t Time) EndInHour(n ...int) Time     { return t.cascade(fromIn, true, Hour, n...) }
+func (t Time) EndInMinute(n ...int) Time   { return t.cascade(fromIn, true, Minute, n...) }
+func (t Time) EndInSecond(n ...int) Time   { return t.cascade(fromIn, true, Second, n...) }
+func (t Time) EndInQuarter(n ...int) Time  { return t.cascade(fromIn, true, Quarter, n...) }
+func (t Time) EndInWeek(n ...int) Time     { return t.cascade(fromIn, true, Week, n...) }
+func (t Time) EndInWeekday(n ...int) Time  { return t.cascade(fromIn, true, Weekday, n...) }
+func (t Time) EndInYearWeek(n ...int) Time { return t.cascade(fromIn, true, YearWeek, n...) }
 
 // ---- 选择时间 ----
 
