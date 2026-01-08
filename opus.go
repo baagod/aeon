@@ -256,10 +256,16 @@ func final(end, overflow, abs bool, u Unit, y, m, d int) (int, int, int, time.We
 	}
 
 	if end {
-		if u == Quarter {
+		switch u {
+		case Century:
+			y += 99
+		case Decade:
+			y += 9
+		case Quarter:
 			m += 2
-		} else if u == Week || u == ISOYearWeek || u == YearWeek {
+		case Week, ISOYearWeek, YearWeek:
 			d += 6
+		default:
 		}
 	}
 
