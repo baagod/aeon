@@ -50,10 +50,10 @@ func TestBySeriesDevilMatrix(t *testing.T) {
 		assert(t, ref.StartByMonth(-1), "2023-12-01 00:00:00", "1月1日回退1月")
 	})
 
-	t.Run("显式强制保护 (Overflow Flag)", func(t *testing.T) {
+	t.Run("允许溢出 (Overflow Flag)", func(t *testing.T) {
 		ref := Parse("2024-04-15 12:00:00")
-		// 虽然 Day 本身不保护，但传了 Overflow 之后触发保护（截断到月末）：
-		assert(t, ref.StartByDay(Overflow, 45), "2024-04-30 00:00:00", "显式触发保护的位移")
+		// 传入 Overflow 之后允许自然溢出：
+		assert(t, ref.StartByDay(Overflow, 45), "2024-05-30 00:00:00", "开启溢出的位移")
 	})
 
 	t.Run("Oracle 极端用例矩阵", func(t *testing.T) {
@@ -63,10 +63,10 @@ func TestBySeriesDevilMatrix(t *testing.T) {
 		ref闰日 := Parse("2024-02-29 12:00:00")
 		assert(t, ref闰日.StartBy(0, 0, 0, 1, -1), "2000-03-28 00:00:00", "跨世纪零位移坍缩")
 
-		// 2. “堤坝模式”全局压测 (Overflow Flag Global Constraint)
-		// 基准: 2024-01-31. Month(1) -> 2/29. Day(40) + Overflow -> 截断在 2月最后一天
+		// 2. “溢出模式”全局压测 (Overflow Flag Natural Rollover)
+		// 基准: 2024-01-31. Month(1) -> 03-02. Day(40) + Overflow -> 自然滑动到 4/11
 		refJan31 := Parse("2024-01-31 12:00:00")
-		assert(t, refJan31.StartByMonth(Overflow, 1, 40), "2024-02-29 00:00:00", "Overflow全局拦截")
+		assert(t, refJan31.StartByMonth(Overflow, 1, 40), "2024-04-11 00:00:00", "Overflow开启自然溢出")
 
 		// 3. “时空倒流”的末端对齐 (EndBy with Multi-Negative Offsets)
 		// 2024-05-15 (Q2). Quarter(-1) -> 1/15 -> final(end)使m=3 -> 3/15. Month(-1) -> 2/15. Day(-1) -> 2/14.

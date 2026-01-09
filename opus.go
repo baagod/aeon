@@ -99,7 +99,6 @@ func applyAbs(c Flag, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt tim
 		} else {
 			m -= (m - 1) % 3
 		}
-		y, m = addMonth(y, m, 0)
 	case Month:
 		if p == Quarter {
 			// 季度内月份对齐：先找回季度起始月 (1, 4, 7, 10)
@@ -115,7 +114,6 @@ func applyAbs(c Flag, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt tim
 				m = 13 + n
 			}
 		}
-		y, m = addMonth(y, m, 0)
 	case Week:
 		if d -= int(w-startsAt+7) % 7; n > 0 {
 			d += (n - 1) * 7
@@ -151,16 +149,12 @@ func applyAbs(c Flag, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt tim
 			ns = n * 1e6
 		} else if n < 0 {
 			ns = 1000*1e6 + n*1e6
-		} else {
-			// ns = (ns / 1e6) * 1e6
 		}
 	case Microsecond:
 		if n > 0 {
 			ns = (ns/1e6)*1e6 + n*1e3
 		} else if n < 0 {
 			ns = (ns/1e6)*1e6 + 1000*1e3 + n*1e3
-		} else {
-			// ns = (ns / 1e3) * 1e3
 		}
 	case Nanosecond:
 		if n > 0 {
@@ -221,6 +215,10 @@ func applyAbs(c Flag, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt tim
 		}
 	}
 
+	if u == Quarter || u == Month {
+		y, m = addMonth(y, m, 0)
+	}
+
 	y, m, d, w = final(c, u, y, m, d)
 	return y, m, d, h, mm, sec, ns, w
 }
@@ -268,7 +266,7 @@ func applyRel(c Flag, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt tim
 	case Weekday:
 		if n != 0 {
 			d -= int(w-startsAt+7) % 7 // 回到本周周初
-			d += n                     // 偏移正负 n 周
+			d += n                     // 偏移正负 n 天
 		}
 	}
 
@@ -313,7 +311,7 @@ func applyOffset(c Flag, u, p Unit, n, y, m, d, h, mm, sec, ns int, w time.Weekd
 }
 
 func final(c Flag, u Unit, y, m, d int) (int, int, int, time.Weekday) {
-	if u == Century || u == Decade || u == Year || u == Quarter || u == Month || c.overflow {
+	if !c.overflow && u <= Month {
 		// 仅针对这些时间单元做天数溢出处理
 		if dd := DaysIn(y, m); d > dd {
 			d = dd

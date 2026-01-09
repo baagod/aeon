@@ -45,9 +45,8 @@ func (t Time) cascade(f from, fill bool, u Unit, args ...int) Time {
 	m, ns := int(month), t.time.Nanosecond()
 
 	c := Flag{
-		fill:     fill,
-		jump:     f >= fromJumpAbs && f <= fromJumpIn,
-		overflow: f >= fromJumpAbs && f <= fromJumpIn, // 跳转模式默认不溢出
+		fill: fill,
+		jump: f >= fromJumpAbs && f <= fromJumpIn,
 	}
 
 	// 标志位解析循环

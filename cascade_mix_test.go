@@ -33,12 +33,12 @@ func TestMixSeriesDevilMatrix(t *testing.T) {
 		// 基准: 2024-01-31
 		ref := Parse("2024-01-31 12:00:00")
 
-		// StartAtMonth(Overflow, 2, 0): 定位到 2 月 (保护到 2/29)，然后加 0 天
-		// 此时末级单位是 Day (0), align(Day) 不重置日期，故保持在 2/29
-		assert(t, ref.StartAtMonth(Overflow, 2, 0), "2024-02-29 00:00:00", "StartAtMonth with Overflow")
+		// StartAtMonth(Overflow, 2, 0): 定位到 2 月 (不再保护到 2/29)，结果自然溢出
+		// 此时末级单位是 Day (0), align(Day) 不重置日期，故落在 03-02
+		assert(t, ref.StartAtMonth(Overflow, 2, 0), "2024-03-02 00:00:00", "StartAtMonth with Overflow")
 
-		// StartInMonth(Overflow, 1, 1): 加 1 月 (1/31 -> 2/29)，然后定位到 1 号
-		// 此时末级单位是 Month (1), align(Month) 会将日期重置为 1 号
+		// StartInMonth(Overflow, 1, 1): 加 1 月 (1/31 -> 2/31)，然后定位到 1 号
+		// 此时天被重置为 1，故落在 2/01 (Overflow 在此处被后续的 Abs Day 抵消了)
 		assert(t, ref.StartInMonth(Overflow, 1, 1), "2024-02-01 00:00:00", "StartInMonth with Overflow")
 	})
 
