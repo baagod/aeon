@@ -191,14 +191,14 @@ func (t Time) In(loc *time.Location) Time {
 //
 // 这个函数有点不好理解，让我来尝试解释一下：
 // 想象在当前时间之外存在着另一个时间循环，时间轴每次移动 d，而每个 d 就是一个 "跃点"。
-// 该函数将返回距离当前时间最近的那个 "跃点"，如果当前时间正好位于两个 "跃点" 中间，返回指向未来的那个 "跃点"。
+// 函数返回距离当前时间最近的那个 "跃点"，如果当前时间正好位于两个 "跃点" 中间，返回指向未来的那个 "跃点"。
 //
 // 示例：假设当前时间是 2021-07-21 14:35:29.650
 //
 //   - 舍入到秒：t.Round(time.Second)
 //
-//     根据定义，时间 14:35:29.650 距离下一个跃点 14:35:30.000 最近 (只需要 0.35ns)，
-//     而距离上一个跃点 14:35:29.000 较远 (需要 65ns)，故返回下一个跃点 14:35:30.000。
+//     根据定义，时间 14:35:29.650 距离下一个跃点 14:35:30.000 最近 (只需要 350ms)，
+//     而距离上一个跃点 14:35:29.000 较远 (需要 650ms)，故返回下一个跃点 14:35:30.000。
 //
 //   - 舍入分钟：t.Round(time.Minute)
 //
@@ -215,14 +215,38 @@ func (t Time) Round(d time.Duration) Time {
 	return Time{time: t.time.Round(d), weekStartsAt: t.weekStartsAt}
 }
 
-// Truncate 与 Round 类似，但是 Truncate 永远返回指向过去时间的 "跃点"，不会进行四舍五入。
+// Truncate 返回最接近当前时间但不超过它的 "跃点"（向过去截断）。
+//
+// 与 Round 的区别：
+//   - Round 会选择最近的跃点（可能向未来舍入）
+//   - Truncate 永远向过去截断，不进行四舍五入
 //
 // 可视化理解：
 //
-//	----|----|----|----|----
-//	   d1    t   d2   d3
+//	时间轴: ---[d1]---- t ----[d2]----[d3]----
+//	                   ↑
+//	                当前时间 t
 //
-// Truncate 将永远返回 d1，如果时间 t 正好处于某个 "跃点" 位置，返回 t。
+// 无论 t 距离 d1 还是 d2 更近，Truncate 都只会返回 d1（向过去）。
+// 如果 t 正好落在某个跃点上（如 d2），则返回 t 本身。
+//
+// 示例：假设当前时间是 2021-07-21 14:35:29.650
+//
+//   - 截断到秒：t.Truncate(time.Second)
+//
+//     直接舍弃毫秒部分，返回 14:35:29.000（向过去）。
+//
+//   - 截断到分钟：t.Truncate(time.Minute)
+//
+//     舍弃秒和毫秒部分，返回 14:35:00.000（向过去）。
+//
+//   - 截断到 15 分钟：t.Truncate(15 * time.Minute)
+//
+//     跃点：--- 14:00:00 --- 14:15:00 --- 14:30:00 ---- t ---- 14:45:00 ---
+//     ↑
+//     当前时间 14:35:29.650
+//
+//     返回上一个跃点：14:30:00.000（向过去）。
 func (t Time) Truncate(d time.Duration) Time {
 	return Time{time: t.time.Truncate(d), weekStartsAt: t.weekStartsAt}
 }
@@ -239,46 +263,45 @@ func (t Time) Location() *time.Location {
 
 // ---- 比较时间 ----
 
-// DiffIn 返回 t 和 u 的时间差。使用 unit 参数指定比较单位：
-//   - "y": 年
-//   - "M": 月
-//   - "d": 日
-//   - "h": 小时
-//   - "m": 分钟
-//   - "s": 秒
-func (t Time) DiffIn(u Time, unit string) float64 {
+// Diff 返回 t 和 u 的时间差。
+//
+// 参数：
+//   - unit: 比较单位 ("y"年, "M"月, "d"日, "h"时, "m"分, "s"秒)
+//   - abs: 可选，为 true 时返回绝对值
+func (t Time) Diff(u Time, unit string, abs ...bool) float64 {
+	var diff float64
 	switch unit {
 	case "y":
-		tDays := float64(t.YearDay()) / float64(t.Days())
-		uDays := float64(u.YearDay()) / float64(u.Days())
-		return float64(t.Year()-u.Year()) + tDays - uDays
+		// 年差 = 整数年差 + t 的年内进度 - u 的年内进度
+		years := float64(t.Year() - u.Year())
+		tDays := float64(t.YearDay()) / float64(t.Days()) // t 在本年的进度 (0~1)
+		uDays := float64(u.YearDay()) / float64(u.Days()) // u 在本年的进度 (0~1)
+		diff = years + tDays - uDays
 	case "M":
-		// 计算 [初始月差] 并将结果转换为浮点数：初始月差 = (年份差 * 12) + 月份差
+		// 月差 = 整数月差 + 天数偏移比例
 		months := float64((t.Year()-u.Year())*12 + t.Month() - u.Month())
 		// 计算 [天差] 并将结果转换为浮点数：天差 = t.Day() - u.Day()
 		days := float64(t.Day() - u.Day())
 		// 如果天差为负数，表示未满一个完整的月，需要将月差减 1。
 		if days < 0 {
-			months--
+			months-- // 天数不足一月，月差减 1
 		}
-		// 计算 [总月份差]，包括小数部分：总月份差 = 初始月差 + 天差 / u.Days()
-		// 计算小数部分使用：天差 / u.MonthDays()，得到天差所占 u 月天数的比值，
-		// 再与 [初始月差] 相加得到 [总月份差]。
-		return months + days/float64(u.MonthDays())
+		diff = months + days/float64(u.MonthDays())
 	case "d":
-		return t.Sub(u).Hours() / 24
+		diff = t.Sub(u).Hours() / 24
 	case "h":
-		return t.Sub(u).Hours()
+		diff = t.Sub(u).Hours()
 	case "m":
-		return t.Sub(u).Minutes()
+		diff = t.Sub(u).Minutes()
 	case "s":
-		return t.Sub(u).Seconds()
+		diff = t.Sub(u).Seconds()
 	}
-	return 0
-}
 
-func (t Time) DiffAbsIn(u Time, unit string) float64 {
-	return math.Abs(t.DiffIn(u, unit))
+	if len(abs) > 0 && abs[0] {
+		return math.Abs(diff)
+	}
+
+	return diff
 }
 
 // Sub 返回 t - u 的时间差
@@ -321,7 +344,7 @@ func Until(t Time) time.Duration {
 // Scan 由 DB 转到 Go 时调用
 func (t *Time) Scan(value any) error {
 	if v, ok := value.(time.Time); ok {
-		*t = Time{time: v, weekStartsAt: DefaultWeekStartsAt}
+		*t = New(v)
 	}
 	return nil
 }
