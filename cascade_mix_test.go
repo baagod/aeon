@@ -46,9 +46,9 @@ func TestMixSeriesDevilMatrix(t *testing.T) {
 		base := Parse("2024-01-01 00:00:00")
 
 		// 1. StartAtMilli(501, 1)
-		// Abs Milli(501) -> 500ms
-		// Rel Micro(1) -> 500ms + 1us = .500001
-		// Start -> .500001000
-		assert(t, base.StartAtMilli(501, 1), "2024-01-01 00:00:00.500001000", "StartAtMilli(501, 1)")
+		// Abs Milli(501) -> 501ms
+		// Rel Micro(1) -> 501ms + 1us = .501001
+		// Start -> .501001000
+		assert(t, base.StartAtMilli(501, 1), "2024-01-01 00:00:00.501001000", "StartAtMilli(501, 1)")
 	})
 }

@@ -151,7 +151,7 @@ func applyAbs(end bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt t
 		}
 	case Microsecond:
 		if n > 0 {
-			ns = (ns/1e6)*1e6 + (n-1)*1e3
+			ns = (ns/1e6)*1e6 + n*1e3
 		} else if n < 0 {
 			ns = (ns/1e6)*1e6 + 1000*1e3 + n*1e3
 		} else {
@@ -159,7 +159,7 @@ func applyAbs(end bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt t
 		}
 	case Nanosecond:
 		if n > 0 {
-			ns = (ns/1e3)*1e3 + (n - 1)
+			ns = (ns/1e3)*1e3 + n
 		} else if n < 0 {
 			ns = (ns/1e3)*1e3 + 1000*1e3 + n
 		}

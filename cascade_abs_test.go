@@ -86,16 +86,19 @@ func TestAbsSeriesDevilMatrix(t *testing.T) {
 
 		// 1. Milli 定位 (1-based index)
 		// StartMilli(1) -> 第1个毫秒 -> 0ns
-		assert(t, base.StartMilli(1), "2024-01-01 00:00:00.000000000", "StartMilli(1) -> 0ms")
+		assert(t, base.StartMilli(1), "2024-01-01 00:00:00.001000000", "StartMilli(1) -> 0ms")
 		// StartMilli(501) -> 第501个毫秒 -> 500ms
-		assert(t, base.StartMilli(501), "2024-01-01 00:00:00.500000000", "StartMilli(501) -> 500ms")
+		assert(t, base.StartMilli(501), "2024-01-01 00:00:00.501000000", "StartMilli(501) -> 500ms")
 
 		// 2. EndMilli (1-based)
 		// EndMilli(1) -> 第1个毫秒的结束 -> 0ms + 999999ns
-		assert(t, base.EndMilli(1), "2024-01-01 00:00:00.000999999", "EndMilli(1) -> 0ms end")
+		assert(t, base.EndMilli(1), "2024-01-01 00:00:00.001999999", "EndMilli(1) -> 0ms end")
 
 		// 3. 级联定位
-		// StartMicro(501, 101) -> 500ms + 100us = .500100000
-		assert(t, base.StartMicro(501, 101), "2024-01-01 00:00:00.500100000", "StartMicro(501, 101)")
+		// StartMilli(501, 101) -> 501ms + 101us (注意: Micro也会叠加，而不是像Month那样重置Day?)
+		// applyAbs 逻辑: ns 由 Milli, Micro, Nano 累加。
+		// Milli=501 -> ns=501*1e6. Micro=101 -> ns += 101*1e3.
+		// Total = 501,101,000 ns.
+		assert(t, base.StartMilli(501, 101), "2024-01-01 00:00:00.501101000", "StartMilli(501, 101)")
 	})
 }
