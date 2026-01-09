@@ -36,7 +36,7 @@ func TestBySeriesDevilMatrix(t *testing.T) {
 	t.Run("动态账期末 (EndBy)", func(t *testing.T) {
 		ref := Parse("2024-04-15 10:00:00")
 		// 下个月的前一天结束: EndByMonth(1, -1)
-		assert(t, ref.EndByMonth(1, -1), "2024-05-14 23:59:59", "下月账期前一天结束")
+		assert(t, ref.EndByMonth(1, -1), "2024-05-14 23:59:59.999999999", "下月账期前一天结束")
 	})
 
 	t.Run("巨量偏移压测", func(t *testing.T) {
@@ -71,7 +71,7 @@ func TestBySeriesDevilMatrix(t *testing.T) {
 		// 3. “时空倒流”的末端对齐 (EndBy with Multi-Negative Offsets)
 		// 2024-05-15 (Q2). Quarter(-1) -> 1/15 -> final(end)使m=3 -> 3/15. Month(-1) -> 2/15. Day(-1) -> 2/14.
 		refQ2 := Parse("2024-05-15 12:00:00")
-		assert(t, refQ2.EndByQuarter(-1, -1, -1), "2024-02-14 23:59:59", "EndBy负向级联")
+		assert(t, refQ2.EndByQuarter(-1, -1, -1), "2024-02-14 23:59:59.999999999", "EndBy负向级联")
 
 		// 4. “主权与自然的冲突” (ISO Week-Year Crossing)
 		// 2026-01-01 (周四) 属于 ISO 2026-W01. StartByYearWeek(ISO, 0) -> 2025-12-29 (周一)
@@ -81,21 +81,21 @@ func TestBySeriesDevilMatrix(t *testing.T) {
 		// 5. “世纪末的最后冲刺” (Extreme End-of-Century Cascade)
 		// Century(0)使y=2099 -> Decade(-1)使y=2089 -> Year(-1)使y=2088 -> Month(-1)使y=2087, m=12
 		refCentury := Parse("2024-01-01 12:00:00")
-		assert(t, refCentury.EndBy(0, -1, -1, -1), "2087-12-31 23:59:59", "世纪末深度级联")
+		assert(t, refCentury.EndBy(0, -1, -1, -1), "2087-12-31 23:59:59.999999999", "世纪末深度级联")
 	})
 
 	t.Run("验证大单位End模式的边界完整性", func(t *testing.T) {
 		ref := Parse("2024-05-15 12:00:00")
 
 		// 1. 验证：EndByQuarter(0) 是否能到达 Q2 的最后一天 (6月30日)
-		assert(t, ref.EndByQuarter(0), "2024-06-30 23:59:59", "EndByQuarter(0) 应该到6月底")
+		assert(t, ref.EndByQuarter(0), "2024-06-30 23:59:59.999999999", "EndByQuarter(0) 应该到6月底")
 
 		// 2. 验证：Decade 末尾
 		gotDecade := ref.cascade(fromRel, true, Decade, 0)
-		assert(t, gotDecade, "2029-12-31 23:59:59", "Decade(0)末尾应该到2029年底")
+		assert(t, gotDecade, "2029-12-31 23:59:59.999999999", "Decade(0)末尾应该到2029年底")
 
 		// 3. 验证：Century 末尾
 		gotCentury := ref.cascade(fromRel, true, Century, 0)
-		assert(t, gotCentury, "2099-12-31 23:59:59", "Century(0)末尾应该到2099年底")
+		assert(t, gotCentury, "2099-12-31 23:59:59.999999999", "Century(0)末尾应该到2099年底")
 	})
 }

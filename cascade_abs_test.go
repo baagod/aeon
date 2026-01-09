@@ -16,7 +16,7 @@ func TestAbsSeriesDevilMatrix(t *testing.T) {
 
 		// 2. 深度End级联: EndYear(5, 6, 20, 15)
 		// 2025年(Y) -> 6月(M) -> 20日(D) -> 15时(H) -> 置满后续
-		assert(t, base.EndYear(5, 6, 20, 15), "2025-06-20 15:59:59", "深度End级联")
+		assert(t, base.EndYear(5, 6, 20, 15), "2025-06-20 15:59:59.999999999", "深度End级联")
 	})
 
 	t.Run("边界对齐与扩张 (n=0 语义)", func(t *testing.T) {
@@ -26,17 +26,18 @@ func TestAbsSeriesDevilMatrix(t *testing.T) {
 		assert(t, base.StartDecade(1), "2010-01-01 00:00:00", "StartDecade(1) 锚定本世纪第1个年代")
 
 		// 2. End 置满扩张 (含 Decade/Century 修复验证)
-		assert(t, base.EndYear(0), "2024-12-31 23:59:59", "EndYear(0) 置满")
-		assert(t, base.EndDecade(0), "2029-12-31 23:59:59", "EndDecade(0) 扩张")
-		assert(t, base.End(0), "2099-12-31 23:59:59", "EndCentury(0) 扩张")
-		assert(t, base.EndQuarter(0), "2024-06-30 23:59:59", "EndQuarter(0) 扩张")
+		assert(t, base.EndYear(0), "2024-12-31 23:59:59.999999999", "EndYear(0) 置满")
+		assert(t, base.EndDecade(0), "2029-12-31 23:59:59.999999999", "EndDecade(0) 扩张")
+		assert(t, base.EndDecade(1), "2019-12-31 23:59:59.999999999", "EndDecade(1) 锚定本世纪第1个年代末")
+		assert(t, base.End(0), "2099-12-31 23:59:59.999999999", "EndCentury(0) 扩张")
+		assert(t, base.EndQuarter(0), "2024-06-30 23:59:59.999999999", "EndQuarter(0) 扩张")
 	})
 
 	t.Run("日期保护与自然溢出", func(t *testing.T) {
 		// 1. 月份保护: 1月31日定位到2月 -> 2月29日 (2024闰年)
 		refJan31 := Parse("2024-01-31 12:00:00")
 		assert(t, refJan31.StartMonth(2), "2024-02-01 00:00:00", "月份保护(Start)")
-		assert(t, refJan31.EndMonth(2), "2024-02-29 23:59:59", "月份保护(End)")
+		assert(t, refJan31.EndMonth(2), "2024-02-29 23:59:59.999999999", "月份保护(End)")
 
 		// 2. 位移单位自然溢出: 4月31日 -> 5月1日
 		assert(t, base.StartDay(31), "2024-05-01 00:00:00", "Day自然溢出")

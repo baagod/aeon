@@ -1,12 +1,14 @@
 package thru
 
 import (
+	"fmt"
 	"testing"
+	"time"
 )
 
 func TestLog(t *testing.T) {
-	ref := Parse("2024-05-15 12:00:00")
-	assert(t, ref.StartDecade(1), "2010-01-01 00:00:00", "StartDecade()")
+	ref := Parse("2024-01-30 00:00:00.123456789")
+	fmt.Println(ref.AddDecade(1).Format(time.DateTime + ".000000000"))
 }
 
 func assert(t *testing.T, actual Time, expected string, msg string) {

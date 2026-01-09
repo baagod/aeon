@@ -104,7 +104,10 @@ func ParseByLayout(layout string, value string, loc ...*time.Location) Time {
 }
 
 func (t Time) String() string {
-	return t.time.Format(DateTime)
+	if ns := t.time.Nanosecond(); ns == 0 {
+		return t.time.Format(DateTime)
+	}
+	return t.time.Format("2006-01-02 15:04:05.000000000")
 }
 
 func (t Time) Format(layout string) string {

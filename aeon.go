@@ -17,6 +17,9 @@ const (
 	Hour
 	Minute
 	Second
+	Millisecond
+	Microsecond
+	Nanosecond
 	Quarter
 	Week
 	YearWeek
@@ -27,10 +30,11 @@ const (
 type from int
 
 const (
-	fromAbs from = iota // Start/End (全绝对)
-	fromRel             // StartBy/EndBy (全相对)
-	fromAt              // StartAt/EndAt (定位后偏移: Abs + Rel..)
-	fromIn              // StartIn/EndIn (偏移后定位: Rel + Abs..)
+	fromAbs     from = iota // Start/End (全绝对)
+	fromRel                 // StartBy/EndBy (全相对)
+	fromAt                  // StartAt/EndAt (定位后偏移: Abs + Rel..)
+	fromIn                  // StartIn/EndIn (偏移后定位: Rel + Abs..)
+	fromNoalign             // Add 全相对不对齐
 )
 
 const (
@@ -84,82 +88,6 @@ func Unix(secs int64) Time {
 	return Time{time: time.Unix(0, secs), weekStartsAt: DefaultWeekStartsAt}
 }
 
-// ---- 添加时间 ----
-
-// AddTime 一次性添加年、月、日以及持续时间。
-//
-// 该方法采用 “智能语义” 计算：
-//  1. 年份和月份的跳转采用 “禁止溢出(No-Overflow)” 逻辑。
-//     例如：在 1月31日 基础上加 1个月，结果将是 2月28/29日，而不是 3月3日。
-//  2. 在计算完安全的年月基准后，再增加天数和持续时间，此时允许自然溢出。
-//     例如：在上述 2月28日 基础上再加 2天，结果将是 3月2日。
-//
-// 这种组合方式既能保证日历跳转符合人类直觉，又能灵活处理时间跨度偏移。
-func (t Time) AddTime(year, month, day int, duration time.Duration) Time {
-	// 1. 计算总月数和目标年份/月份
-	y, m := addMonth(t.Year()+year, t.Month(), month)
-
-	// 2. 确定 “年月跳转” 后的削峰基准天数
-	// 这一步解决了 1月31日 + 1个月 = 2月28日 的直觉性问题
-	currentDay := t.time.Day()
-	if maxDay := DaysIn(y, m); currentDay > maxDay {
-		currentDay = maxDay
-	}
-
-	// 3. 一次性构造目标时间
-	// 我们将 currentDay + day 传入，由 time.Date 内部处理天数层级的溢出（允许溢出）
-	hour, mm, sec := t.time.Clock()
-	st := time.Date(
-		y, time.Month(m), currentDay+day,
-		hour, mm, sec, t.time.Nanosecond(),
-		t.time.Location(),
-	)
-
-	if duration != 0 {
-		st = st.Add(duration)
-	}
-
-	return Time{time: st, weekStartsAt: t.weekStartsAt}
-}
-
-// AddYear 添加年月日。默认添加 1 年。
-func (t Time) AddYear(ymd ...int) Time {
-	y, m, d := 1, 0, 0
-	if len(ymd) > 0 {
-		if y = ymd[0]; len(ymd) > 1 {
-			if m = ymd[1]; len(ymd) > 2 {
-				d = ymd[2]
-			}
-		}
-	}
-	return t.AddTime(y, m, d, 0)
-}
-
-// AddMonth 添加月日。默认添加 1 月。
-func (t Time) AddMonth(md ...int) Time {
-	m, d := 1, 0
-	if len(md) > 0 {
-		if m = md[0]; len(md) > 1 {
-			d = md[1]
-		}
-	}
-	return t.AddTime(0, m, d, 0)
-}
-
-// AddDay 添加天数。默认添加 1 天。
-func (t Time) AddDay(days ...int) Time {
-	d := 1
-	if len(days) > 0 {
-		d = days[0]
-	}
-	return t.AddTime(0, 0, d, 0)
-}
-
-// Add 返回 t + d 时间
-func (t Time) Add(d time.Duration) Time {
-	return Time{time: t.time.Add(d), weekStartsAt: t.weekStartsAt}
-}
-
 // cascade 级联时间
 // Start/End (全绝对)
 // StartBy/EndBy (全相对)
@@ -168,7 +96,7 @@ func (t Time) Add(d time.Duration) Time {
 func (t Time) cascade(f from, end bool, u Unit, args ...int) Time {
 	y, month, d := t.time.Date()
 	h, mm, sec := t.time.Clock()
-	m := int(month)
+	m, ns := int(month), t.time.Nanosecond()
 
 	if len(args) == 0 {
 		args = zeroArgs
@@ -184,8 +112,10 @@ func (t Time) cascade(f from, end bool, u Unit, args ...int) Time {
 		overflow, args = true, args[1:]
 	}
 
-	p, w := u, t.Weekday()
-	ns, seq, startsAt := 0, sequence(u), t.weekStartsAt
+	p := u
+	seq := sequence(u)
+	w := t.Weekday()
+	sw := t.weekStartsAt
 
 	for i, n := range args {
 		if i >= len(seq) {
@@ -195,37 +125,60 @@ func (t Time) cascade(f from, end bool, u Unit, args ...int) Time {
 		unit := seq[i]
 
 		switch f {
+		case fromNoalign:
+			y, m, d, h, mm, sec, ns, w = applyOffset(end, overflow, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
 		case fromAbs:
-			y, m, d, h, mm, sec, w = applyAbs(end, unit, p, n, y, m, d, h, mm, sec, w, startsAt)
+			y, m, d, h, mm, sec, ns, w = applyAbs(end, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
 		case fromRel:
-			y, m, d, h, mm, sec, w = applyRel(end, overflow, unit, p, n, y, m, d, h, mm, sec, w, startsAt)
+			y, m, d, h, mm, sec, ns, w = applyRel(end, overflow, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
 		case fromAt:
 			if i == 0 {
-				y, m, d, h, mm, sec, w = applyAbs(end, unit, p, n, y, m, d, h, mm, sec, w, startsAt)
+				y, m, d, h, mm, sec, ns, w = applyAbs(end, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
 			} else {
-				y, m, d, h, mm, sec, w = applyRel(end, overflow, unit, p, n, y, m, d, h, mm, sec, w, startsAt)
+				y, m, d, h, mm, sec, ns, w = applyRel(end, overflow, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
 			}
 		case fromIn:
 			if i == 0 {
-				y, m, d, h, mm, sec, w = applyRel(end, overflow, unit, p, n, y, m, d, h, mm, sec, w, startsAt)
+				y, m, d, h, mm, sec, ns, w = applyRel(end, overflow, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
 			} else {
-				y, m, d, h, mm, sec, w = applyAbs(end, unit, p, n, y, m, d, h, mm, sec, w, startsAt)
+				y, m, d, h, mm, sec, ns, w = applyAbs(end, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
 			}
 		}
 
 		p = unit
 	}
 
-	if end {
-		ns = 999999999
+	if f != fromNoalign {
+		y, m, d, h, mm, sec, ns = align(end, p, y, m, d, h, mm, sec, ns)
 	}
-	y, m, d, h, mm, sec = align(end, p, y, m, d, h, mm, sec)
 
 	return Time{
 		time:         time.Date(y, time.Month(m), d, h, mm, sec, ns, t.Location()),
 		weekStartsAt: t.weekStartsAt,
 	}
 }
+
+// ---- 添加时间 ----
+
+func (t Time) Add(d time.Duration) Time {
+	return Time{time: t.time.Add(d), weekStartsAt: t.weekStartsAt}
+}
+
+func (t Time) AddCentury(n ...int) Time  { return t.cascade(fromNoalign, false, Century, n...) }
+func (t Time) AddDecade(n ...int) Time   { return t.cascade(fromNoalign, false, Decade, n...) }
+func (t Time) AddYear(n ...int) Time     { return t.cascade(fromNoalign, false, Year, n...) }
+func (t Time) AddMonth(n ...int) Time    { return t.cascade(fromNoalign, false, Month, n...) }
+func (t Time) AddDay(n ...int) Time      { return t.cascade(fromNoalign, false, Day, n...) }
+func (t Time) AddHour(n ...int) Time     { return t.cascade(fromNoalign, false, Hour, n...) }
+func (t Time) AddMinute(n ...int) Time   { return t.cascade(fromNoalign, false, Minute, n...) }
+func (t Time) AddSecond(n ...int) Time   { return t.cascade(fromNoalign, false, Second, n...) }
+func (t Time) AddMilli(n ...int) Time    { return t.cascade(fromNoalign, false, Millisecond, n...) }
+func (t Time) AddMicro(n ...int) Time    { return t.cascade(fromNoalign, false, Microsecond, n...) }
+func (t Time) AddNano(n ...int) Time     { return t.cascade(fromNoalign, false, Nanosecond, n...) }
+func (t Time) AddQuarter(n ...int) Time  { return t.cascade(fromNoalign, false, Quarter, n...) }
+func (t Time) AddWeek(n ...int) Time     { return t.cascade(fromNoalign, false, Week, n...) }
+func (t Time) AddWeekday(n ...int) Time  { return t.cascade(fromNoalign, false, Weekday, n...) }
+func (t Time) AddYearWeek(n ...int) Time { return t.cascade(fromNoalign, false, YearWeek, n...) }
 
 // --- 全绝对定位级联 ---
 
@@ -237,6 +190,9 @@ func (t Time) StartDay(n ...int) Time      { return t.cascade(fromAbs, false, Da
 func (t Time) StartHour(n ...int) Time     { return t.cascade(fromAbs, false, Hour, n...) }
 func (t Time) StartMinute(n ...int) Time   { return t.cascade(fromAbs, false, Minute, n...) }
 func (t Time) StartSecond(n ...int) Time   { return t.cascade(fromAbs, false, Second, n...) }
+func (t Time) StartMilli(n ...int) Time    { return t.cascade(fromAbs, false, Millisecond, n...) }
+func (t Time) StartMicro(n ...int) Time    { return t.cascade(fromAbs, false, Microsecond, n...) }
+func (t Time) StartNano(n ...int) Time     { return t.cascade(fromAbs, false, Nanosecond, n...) }
 func (t Time) StartQuarter(n ...int) Time  { return t.cascade(fromAbs, false, Quarter, n...) }
 func (t Time) StartWeek(n ...int) Time     { return t.cascade(fromAbs, false, Week, n...) }
 func (t Time) StartWeekday(n ...int) Time  { return t.cascade(fromAbs, false, Weekday, n...) }
@@ -250,6 +206,9 @@ func (t Time) EndDay(n ...int) Time      { return t.cascade(fromAbs, true, Day, 
 func (t Time) EndHour(n ...int) Time     { return t.cascade(fromAbs, true, Hour, n...) }
 func (t Time) EndMinute(n ...int) Time   { return t.cascade(fromAbs, true, Minute, n...) }
 func (t Time) EndSecond(n ...int) Time   { return t.cascade(fromAbs, true, Second, n...) }
+func (t Time) EndMilli(n ...int) Time    { return t.cascade(fromAbs, true, Millisecond, n...) }
+func (t Time) EndMicro(n ...int) Time    { return t.cascade(fromAbs, true, Microsecond, n...) }
+func (t Time) EndNano(n ...int) Time     { return t.cascade(fromAbs, true, Nanosecond, n...) }
 func (t Time) EndQuarter(n ...int) Time  { return t.cascade(fromAbs, true, Quarter, n...) }
 func (t Time) EndWeek(n ...int) Time     { return t.cascade(fromAbs, true, Week, n...) }
 func (t Time) EndWeekday(n ...int) Time  { return t.cascade(fromAbs, true, Weekday, n...) }
@@ -265,6 +224,9 @@ func (t Time) StartByDay(n ...int) Time      { return t.cascade(fromRel, false, 
 func (t Time) StartByHour(n ...int) Time     { return t.cascade(fromRel, false, Hour, n...) }
 func (t Time) StartByMinute(n ...int) Time   { return t.cascade(fromRel, false, Minute, n...) }
 func (t Time) StartBySecond(n ...int) Time   { return t.cascade(fromRel, false, Second, n...) }
+func (t Time) StartByMilli(n ...int) Time    { return t.cascade(fromRel, false, Millisecond, n...) }
+func (t Time) StartByMicro(n ...int) Time    { return t.cascade(fromRel, false, Microsecond, n...) }
+func (t Time) StartByNano(n ...int) Time     { return t.cascade(fromRel, false, Nanosecond, n...) }
 func (t Time) StartByQuarter(n ...int) Time  { return t.cascade(fromRel, false, Quarter, n...) }
 func (t Time) StartByWeek(n ...int) Time     { return t.cascade(fromRel, false, Week, n...) }
 func (t Time) StartByWeekday(n ...int) Time  { return t.cascade(fromRel, false, Weekday, n...) }
@@ -278,6 +240,9 @@ func (t Time) EndByDay(n ...int) Time      { return t.cascade(fromRel, true, Day
 func (t Time) EndByHour(n ...int) Time     { return t.cascade(fromRel, true, Hour, n...) }
 func (t Time) EndByMinute(n ...int) Time   { return t.cascade(fromRel, true, Minute, n...) }
 func (t Time) EndBySecond(n ...int) Time   { return t.cascade(fromRel, true, Second, n...) }
+func (t Time) EndByMilli(n ...int) Time    { return t.cascade(fromRel, true, Millisecond, n...) }
+func (t Time) EndByMicro(n ...int) Time    { return t.cascade(fromRel, true, Microsecond, n...) }
+func (t Time) EndByNano(n ...int) Time     { return t.cascade(fromRel, true, Nanosecond, n...) }
 func (t Time) EndByQuarter(n ...int) Time  { return t.cascade(fromRel, true, Quarter, n...) }
 func (t Time) EndByWeek(n ...int) Time     { return t.cascade(fromRel, true, Week, n...) }
 func (t Time) EndByWeekday(n ...int) Time  { return t.cascade(fromRel, true, Weekday, n...) }
@@ -293,6 +258,9 @@ func (t Time) StartAtDay(n ...int) Time      { return t.cascade(fromAt, false, D
 func (t Time) StartAtHour(n ...int) Time     { return t.cascade(fromAt, false, Hour, n...) }
 func (t Time) StartAtMinute(n ...int) Time   { return t.cascade(fromAt, false, Minute, n...) }
 func (t Time) StartAtSecond(n ...int) Time   { return t.cascade(fromAt, false, Second, n...) }
+func (t Time) StartAtMilli(n ...int) Time    { return t.cascade(fromAt, false, Millisecond, n...) }
+func (t Time) StartAtMicro(n ...int) Time    { return t.cascade(fromAt, false, Microsecond, n...) }
+func (t Time) StartAtNano(n ...int) Time     { return t.cascade(fromAt, false, Nanosecond, n...) }
 func (t Time) StartAtQuarter(n ...int) Time  { return t.cascade(fromAt, false, Quarter, n...) }
 func (t Time) StartAtWeek(n ...int) Time     { return t.cascade(fromAt, false, Week, n...) }
 func (t Time) StartAtWeekday(n ...int) Time  { return t.cascade(fromAt, false, Weekday, n...) }
@@ -306,6 +274,9 @@ func (t Time) EndAtDay(n ...int) Time      { return t.cascade(fromAt, true, Day,
 func (t Time) EndAtHour(n ...int) Time     { return t.cascade(fromAt, true, Hour, n...) }
 func (t Time) EndAtMinute(n ...int) Time   { return t.cascade(fromAt, true, Minute, n...) }
 func (t Time) EndAtSecond(n ...int) Time   { return t.cascade(fromAt, true, Second, n...) }
+func (t Time) EndAtMilli(n ...int) Time    { return t.cascade(fromAt, true, Millisecond, n...) }
+func (t Time) EndAtMicro(n ...int) Time    { return t.cascade(fromAt, true, Microsecond, n...) }
+func (t Time) EndAtNano(n ...int) Time     { return t.cascade(fromAt, true, Nanosecond, n...) }
 func (t Time) EndAtQuarter(n ...int) Time  { return t.cascade(fromAt, true, Quarter, n...) }
 func (t Time) EndAtWeek(n ...int) Time     { return t.cascade(fromAt, true, Week, n...) }
 func (t Time) EndAtWeekday(n ...int) Time  { return t.cascade(fromAt, true, Weekday, n...) }
@@ -321,6 +292,9 @@ func (t Time) StartInDay(n ...int) Time      { return t.cascade(fromIn, false, D
 func (t Time) StartInHour(n ...int) Time     { return t.cascade(fromIn, false, Hour, n...) }
 func (t Time) StartInMinute(n ...int) Time   { return t.cascade(fromIn, false, Minute, n...) }
 func (t Time) StartInSecond(n ...int) Time   { return t.cascade(fromIn, false, Second, n...) }
+func (t Time) StartInMilli(n ...int) Time    { return t.cascade(fromIn, false, Millisecond, n...) }
+func (t Time) StartInMicro(n ...int) Time    { return t.cascade(fromIn, false, Microsecond, n...) }
+func (t Time) StartInNano(n ...int) Time     { return t.cascade(fromIn, false, Nanosecond, n...) }
 func (t Time) StartInQuarter(n ...int) Time  { return t.cascade(fromIn, false, Quarter, n...) }
 func (t Time) StartInWeek(n ...int) Time     { return t.cascade(fromIn, false, Week, n...) }
 func (t Time) StartInWeekday(n ...int) Time  { return t.cascade(fromIn, false, Weekday, n...) }
@@ -334,6 +308,9 @@ func (t Time) EndInDay(n ...int) Time      { return t.cascade(fromIn, true, Day,
 func (t Time) EndInHour(n ...int) Time     { return t.cascade(fromIn, true, Hour, n...) }
 func (t Time) EndInMinute(n ...int) Time   { return t.cascade(fromIn, true, Minute, n...) }
 func (t Time) EndInSecond(n ...int) Time   { return t.cascade(fromIn, true, Second, n...) }
+func (t Time) EndInMilli(n ...int) Time    { return t.cascade(fromIn, true, Millisecond, n...) }
+func (t Time) EndInMicro(n ...int) Time    { return t.cascade(fromIn, true, Microsecond, n...) }
+func (t Time) EndInNano(n ...int) Time     { return t.cascade(fromIn, true, Nanosecond, n...) }
 func (t Time) EndInQuarter(n ...int) Time  { return t.cascade(fromIn, true, Quarter, n...) }
 func (t Time) EndInWeek(n ...int) Time     { return t.cascade(fromIn, true, Week, n...) }
 func (t Time) EndInWeekday(n ...int) Time  { return t.cascade(fromIn, true, Weekday, n...) }
