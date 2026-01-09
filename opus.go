@@ -5,11 +5,10 @@ import (
 )
 
 var (
-	stdSeq         = []Unit{Century, Decade, Year, Month, Day, Hour, Minute, Second, Millisecond, Microsecond, Nanosecond} // 标准流
-	quarterSeq     = []Unit{Quarter, Month, Day, Hour, Minute, Second, Millisecond, Microsecond, Nanosecond}               // 季度流
-	weekSeq        = []Unit{Week, Weekday, Hour, Minute, Second, Millisecond, Microsecond, Nanosecond}                     // 月周流
-	yearWeekSeq    = []Unit{YearWeek, Weekday, Hour, Minute, Second, Millisecond, Microsecond, Nanosecond}                 // 自然年周流
-	isoYearWeekSeq = []Unit{ISOYearWeek, Weekday, Hour, Minute, Second, Millisecond, Microsecond, Nanosecond}              // ISO 年周流
+	stdSeq      = []Unit{Century, Decade, Year, Month, Day, Hour, Minute, Second, Millisecond, Microsecond, Nanosecond} // 标准流
+	quarterSeq  = []Unit{Quarter, Month, Day, Hour, Minute, Second, Millisecond, Microsecond, Nanosecond}               // 季度流
+	weekSeq     = []Unit{Week, Weekday, Hour, Minute, Second, Millisecond, Microsecond, Nanosecond}                     // 月周流
+	yearWeekSeq = []Unit{YearWeek, Weekday, Hour, Minute, Second, Millisecond, Microsecond, Nanosecond}                 // 年周流
 )
 
 func sequence(u Unit) []Unit {
@@ -20,8 +19,6 @@ func sequence(u Unit) []Unit {
 		return weekSeq
 	case YearWeek:
 		return yearWeekSeq
-	case ISOYearWeek:
-		return isoYearWeekSeq
 	default:
 		if u <= Nanosecond {
 			return stdSeq[u:]
@@ -50,8 +47,8 @@ func sequence(u Unit) []Unit {
 // 参数级联：级联路径由入口方法决定。标准流为：世纪 → 年代 → 年 → 月 → 日 → 时 → 分 → 秒 → 毫秒 → 微秒 → 纳秒
 // 季度流：季度 → 月 → 日 ...
 // 周流：[Year] → [Year]Week → Weekday ...
-func applyAbs(end bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt time.Weekday) (int, int, int, int, int, int, int, time.Weekday) {
-	if u == ISOYearWeek {
+func applyAbs(c Flag, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt time.Weekday) (int, int, int, int, int, int, int, time.Weekday) {
+	if c.iso {
 		startsAt = time.Monday
 	}
 
@@ -59,16 +56,22 @@ func applyAbs(end bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt t
 	case Century:
 		// n >= 0: +n 个世纪
 		// n < 0:  本千年倒数第 n 个世纪
-		if n >= 0 {
-			y = y - (y % 100) + n*100
+		if c.abs {
+			y = n * 100
 		} else {
-			y = y - (y % 1000) + (10+n)*100
+			if n >= 0 {
+				y = y - (y % 100) + n*100
+			} else {
+				y = y - (y % 1000) + (10+n)*100
+			}
 		}
 	case Decade:
 		// n > 0: 本世纪第 n 个年代
 		// n < 0: 本世纪倒数第 n 个年代
 		// n = 0: 保持在上级（如果有）或当前年代
-		if n > 0 {
+		if c.abs {
+			y = n * 10
+		} else if n > 0 {
 			y = y - (y % 100) + n*10
 		} else if n < 0 {
 			y = y - (y % 100) + (10+n)*10
@@ -79,7 +82,9 @@ func applyAbs(end bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt t
 		// n > 0: 本年代第 n 年
 		// n < 0: 定位到本年代倒数第 n 年
 		// n = 0: 保持在上级（如果有）或当前年
-		if n != 0 {
+		if c.abs {
+			y = n
+		} else if n != 0 {
 			if y -= y % 10; n > 0 {
 				y += n
 			} else {
@@ -164,7 +169,7 @@ func applyAbs(end bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt t
 			ns = (ns/1e3)*1e3 + 1000*1e3 + n
 		}
 		// n = 0 时保留原始纳秒
-	case YearWeek, ISOYearWeek:
+	case YearWeek:
 		// YearWeek: 遵循 “主权原则”，W01 是本年首个星期一。
 		// ISOWeek:  严格遵循 ISO 8601，锚点为 1月4日，强制周一起始。
 		if n == 0 { // 表示当前周
@@ -182,7 +187,7 @@ func applyAbs(end bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt t
 			m, d = 12, 31 // 负向（倒数）从 12月31日 开始
 		}
 
-		if u == ISOYearWeek {
+		if c.iso {
 			if d = 4; n < 0 { // ISO 正向锚点是 1月4日
 				d = 28 // ISO 负向锚点是 12月28日（保证在最后一周内）
 			}
@@ -192,7 +197,7 @@ func applyAbs(end bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt t
 		wAnchor := weekday(y, m, d)
 
 		// 它先找到 1月1日 之后的第一个周起始日作为 W01 的开头，然后再增加 (n-1) 周。
-		if u == YearWeek && n > 0 {
+		if !c.iso && n > 0 {
 			d += (int(startsAt) - int(wAnchor) + 7) % 7 // 找到本年第一个 startsAt 当天
 			d += (n - 1) * 7                            // 累加周数
 		} else {
@@ -216,13 +221,13 @@ func applyAbs(end bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt t
 		}
 	}
 
-	y, m, d, w = final(end, false, u, y, m, d)
+	y, m, d, w = final(c, u, y, m, d)
 	return y, m, d, h, mm, sec, ns, w
 }
 
 // applyRel 相对坐标对齐逻辑
-func applyRel(end, overflow bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt time.Weekday) (int, int, int, int, int, int, int, time.Weekday) {
-	if u == ISOYearWeek {
+func applyRel(c Flag, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt time.Weekday) (int, int, int, int, int, int, int, time.Weekday) {
+	if c.iso {
 		startsAt = time.Monday
 	}
 
@@ -257,7 +262,7 @@ func applyRel(end, overflow bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, 
 		ns += n * 1e3
 	case Nanosecond:
 		ns += n
-	case YearWeek, ISOYearWeek:
+	case YearWeek:
 		d -= int(w-startsAt+7) % 7
 		d += n * 7
 	case Weekday:
@@ -267,12 +272,12 @@ func applyRel(end, overflow bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, 
 		}
 	}
 
-	y, m, d, w = final(end, overflow, u, y, m, d)
+	y, m, d, w = final(c, u, y, m, d)
 	return y, m, d, h, mm, sec, ns, w
 }
 
 // applyOffset 相对坐标偏移逻辑
-func applyOffset(end, overflow bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w time.Weekday) (int, int, int, int, int, int, int, time.Weekday) {
+func applyOffset(c Flag, u, p Unit, n, y, m, d, h, mm, sec, ns int, w time.Weekday) (int, int, int, int, int, int, int, time.Weekday) {
 	switch u {
 	case Century:
 		y += n * 100
@@ -284,7 +289,7 @@ func applyOffset(end, overflow bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, 
 		y, m = addMonth(y, m, n*3)
 	case Month:
 		y, m = addMonth(y, m, n)
-	case Week, YearWeek, ISOYearWeek:
+	case Week, YearWeek:
 		// 纯偏移模式下，所有周相关的单位都等同于增加 n * 7 天。
 		d += n * 7
 	case Day, Weekday:
@@ -303,19 +308,19 @@ func applyOffset(end, overflow bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, 
 		ns += n
 	}
 
-	y, m, d, w = final(end, overflow, u, y, m, d)
+	y, m, d, w = final(c, u, y, m, d)
 	return y, m, d, h, mm, sec, ns, w
 }
 
-func final(end, overflow bool, u Unit, y, m, d int) (int, int, int, time.Weekday) {
-	if u == Century || u == Decade || u == Year || u == Quarter || u == Month || overflow {
+func final(c Flag, u Unit, y, m, d int) (int, int, int, time.Weekday) {
+	if u == Century || u == Decade || u == Year || u == Quarter || u == Month || c.overflow {
 		// 仅针对这些时间单元做天数溢出处理
 		if dd := DaysIn(y, m); d > dd {
 			d = dd
 		}
 	}
 
-	if end {
+	if c.fill {
 		switch u {
 		case Century:
 			y += 99
@@ -323,7 +328,7 @@ func final(end, overflow bool, u Unit, y, m, d int) (int, int, int, time.Weekday
 			y += 9
 		case Quarter:
 			m += 2
-		case Week, ISOYearWeek, YearWeek:
+		case Week, YearWeek:
 			d += 6
 		default:
 		}
@@ -333,14 +338,14 @@ func final(end, overflow bool, u Unit, y, m, d int) (int, int, int, time.Weekday
 }
 
 // align 执行最终的时间分量对齐（归零或置满）
-func align(isEnd bool, last Unit, y, m, d, h, mm, sec, ns int) (int, int, int, int, int, int, int) {
-	if !isEnd {
+func align(c Flag, last Unit, y, m, d, h, mm, sec, ns int) (int, int, int, int, int, int, int) {
+	if !c.fill {
 		switch last {
 		case Century, Decade, Year:
 			m, d, h, mm, sec, ns = 1, 1, 0, 0, 0, 0
 		case Quarter, Month:
 			d, h, mm, sec, ns = 1, 0, 0, 0, 0
-		case YearWeek, ISOYearWeek, Week, Weekday, Day:
+		case YearWeek, Week, Weekday, Day:
 			h, mm, sec, ns = 0, 0, 0, 0
 		case Hour:
 			mm, sec, ns = 0, 0, 0
@@ -361,7 +366,7 @@ func align(isEnd bool, last Unit, y, m, d, h, mm, sec, ns int) (int, int, int, i
 			m, d, h, mm, sec, ns = 12, 31, 23, 59, 59, 999999999
 		case Quarter, Month:
 			d, h, mm, sec, ns = DaysIn(y, m), 23, 59, 59, 999999999
-		case YearWeek, ISOYearWeek, Week, Weekday, Day:
+		case YearWeek, Week, Weekday, Day:
 			h, mm, sec, ns = 23, 59, 59, 999999999
 		case Hour:
 			mm, sec, ns = 59, 59, 999999999
