@@ -29,6 +29,11 @@ const (
 var (
 	// DefaultWeekStartsAt 全局默认周起始日（默认为周一）
 	DefaultWeekStartsAt = time.Monday
+	// pow10 预定义的 10 的幂次方表，用于高精度计算
+	pow10 = [...]int64{
+		1, 10, 100, 1000, 10000, 100000, 1e6, 1e7, 1e8, 1e9,
+		1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18,
+	}
 )
 
 type Time struct {
@@ -80,19 +85,19 @@ func Unix(secs int64) Time {
 	}
 }
 
-// ---- 获取时间 ----
+// --- 获取时间 ---
 
-// Year 返回 t 的年份
+// Year 返回本年
 func (t Time) Year() int {
 	return t.time.Year()
 }
 
-// Month 返回 t 的月份
+// Month 返回本月
 func (t Time) Month() int {
 	return int(t.time.Month())
 }
 
-// Day 返回 t 的天数
+// Day 返回本月的第几天
 func (t Time) Day() int {
 	return t.time.Day()
 }
@@ -111,15 +116,16 @@ func (t Time) Minute() int {
 //
 // 参数 n (可选) 指定返回的精度：
 //   - 不提供或 0: 返回整秒数 (0-59)
-//   - 1-9: 返回纳秒精度的小数部分，n 表示小数位数
+//   - 1-9: 返回纳秒精度的小数部分，n 表示小数位数。
 func (t Time) Second(n ...int) int {
 	if len(n) == 0 || n[0] == 0 {
 		return t.time.Second()
 	}
-	divisor := int(math.Pow10(9 - clamp(n[0], 1, 9)))
-	return t.time.Nanosecond() / divisor
+	divisor := pow10[9-clamp(n[0], 1, 9)]
+	return t.time.Nanosecond() / int(divisor)
 }
 
+// Date 返回 t 的年月日
 func (t Time) Date() (int, int, int) {
 	y, m, d := t.time.Date()
 	return y, int(m), d
@@ -163,8 +169,7 @@ func (t Time) Unix(n ...int) int64 {
 		return t.time.Unix()
 	}
 	precision := clamp(n[0]+10, 1, 19)
-	divisor := int64(math.Pow10(19 - precision))
-	return t.time.UnixNano() / divisor
+	return t.time.UnixNano() / pow10[19-precision]
 }
 
 // UTC 返回 UTC 时间
