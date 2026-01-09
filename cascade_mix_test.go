@@ -41,4 +41,14 @@ func TestMixSeriesDevilMatrix(t *testing.T) {
 		// 此时末级单位是 Month (1), align(Month) 会将日期重置为 1 号
 		assert(t, ref.StartInMonth(Overflow, 1, 1), "2024-02-01 00:00:00", "StartInMonth with Overflow")
 	})
+
+	t.Run("纳秒精度混合操作 (Mix Nano)", func(t *testing.T) {
+		base := Parse("2024-01-01 00:00:00")
+
+		// 1. StartAtMilli(501, 1)
+		// Abs Milli(501) -> 500ms
+		// Rel Micro(1) -> 500ms + 1us = .500001
+		// Start -> .500001000
+		assert(t, base.StartAtMilli(501, 1), "2024-01-01 00:00:00.500001000", "StartAtMilli(501, 1)")
+	})
 }

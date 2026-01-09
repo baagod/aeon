@@ -7,8 +7,10 @@ import (
 )
 
 func TestLog(t *testing.T) {
-	ref := Parse("2024-01-30 00:00:00.123456789")
-	fmt.Println(ref.AddDecade(1).Format(time.DateTime + ".000000000"))
+	ref, _ := time.Parse("2024-01-01 00:00:23.000000000", time.DateTime+".000000000")
+	ref = ref.Add(time.Millisecond)
+	fmt.Println(ref.Format(time.DateTime + ".000000000"))
+	// assert(t, ref.StartMilli(1), "2024-01-01 00:00:00.001000000", "")
 }
 
 func assert(t *testing.T, actual Time, expected string, msg string) {

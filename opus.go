@@ -94,6 +94,7 @@ func applyAbs(end bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt t
 		} else {
 			m -= (m - 1) % 3
 		}
+		y, m = addMonth(y, m, 0)
 	case Month:
 		if p == Quarter {
 			// 季度内月份对齐：先找回季度起始月 (1, 4, 7, 10)
@@ -109,6 +110,7 @@ func applyAbs(end bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt t
 				m = 13 + n
 			}
 		}
+		y, m = addMonth(y, m, 0)
 	case Week:
 		if d -= int(w-startsAt+7) % 7; n > 0 {
 			d += (n - 1) * 7
@@ -141,7 +143,7 @@ func applyAbs(end bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt t
 		}
 	case Millisecond:
 		if n > 0 {
-			ns = (n - 1) * 1e6
+			ns = n * 1e6
 		} else if n < 0 {
 			ns = 1000*1e6 + n*1e6
 		} else {
@@ -214,7 +216,7 @@ func applyAbs(end bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt t
 		}
 	}
 
-	y, m, d, w = final(end, false, true, u, y, m, d)
+	y, m, d, w = final(end, false, u, y, m, d)
 	return y, m, d, h, mm, sec, ns, w
 }
 
@@ -265,16 +267,12 @@ func applyRel(end, overflow bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, 
 		}
 	}
 
-	y, m, d, w = final(end, overflow, false, u, y, m, d)
+	y, m, d, w = final(end, overflow, u, y, m, d)
 	return y, m, d, h, mm, sec, ns, w
 }
 
 // applyOffset 相对坐标偏移逻辑
-func applyOffset(end, overflow bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt time.Weekday) (int, int, int, int, int, int, int, time.Weekday) {
-	if u == ISOYearWeek {
-		startsAt = time.Monday
-	}
-
+func applyOffset(end, overflow bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, w time.Weekday) (int, int, int, int, int, int, int, time.Weekday) {
 	switch u {
 	case Century:
 		y += n * 100
@@ -305,15 +303,11 @@ func applyOffset(end, overflow bool, u, p Unit, n, y, m, d, h, mm, sec, ns int, 
 		ns += n
 	}
 
-	y, m, d, w = final(end, overflow, false, u, y, m, d)
+	y, m, d, w = final(end, overflow, u, y, m, d)
 	return y, m, d, h, mm, sec, ns, w
 }
 
-func final(end, overflow, abs bool, u Unit, y, m, d int) (int, int, int, time.Weekday) {
-	if abs && (u == Quarter || u == Month) { // 只有这两个分支会改变月份
-		y, m = addMonth(y, m, 0)
-	}
-
+func final(end, overflow bool, u Unit, y, m, d int) (int, int, int, time.Weekday) {
 	if u == Century || u == Decade || u == Year || u == Quarter || u == Month || overflow {
 		// 仅针对这些时间单元做天数溢出处理
 		if dd := DaysIn(y, m); d > dd {

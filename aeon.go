@@ -126,7 +126,7 @@ func (t Time) cascade(f from, end bool, u Unit, args ...int) Time {
 
 		switch f {
 		case fromNoalign:
-			y, m, d, h, mm, sec, ns, w = applyOffset(end, overflow, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
+			y, m, d, h, mm, sec, ns, w = applyOffset(end, overflow, unit, p, n, y, m, d, h, mm, sec, ns, w)
 		case fromAbs:
 			y, m, d, h, mm, sec, ns, w = applyAbs(end, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
 		case fromRel:

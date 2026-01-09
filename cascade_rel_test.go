@@ -98,4 +98,16 @@ func TestBySeriesDevilMatrix(t *testing.T) {
 		gotCentury := ref.cascade(fromRel, true, Century, 0)
 		assert(t, gotCentury, "2099-12-31 23:59:59.999999999", "Century(0)末尾应该到2099年底")
 	})
+
+	t.Run("纳秒精度相对位移 (Rel Nano)", func(t *testing.T) {
+		// 基准: .000
+		ref := Parse("2024-01-01 00:00:00")
+
+		// 1. StartByMilli(1): +1ms -> .001. Start(归零) -> .001000000
+		assert(t, ref.StartByMilli(1), "2024-01-01 00:00:00.001000000", "StartByMilli(1)")
+
+		// 2. EndByMicro(1): +1us -> .000001. End(置满) -> .000001999 (Micro只管后面纳秒置满)
+		// Microsecond 对齐逻辑: ns = (ns/1e3)*1e3 + 999
+		assert(t, ref.EndByMicro(1), "2024-01-01 00:00:00.000001999", "EndByMicro(1)")
+	})
 }
