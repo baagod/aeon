@@ -40,9 +40,9 @@ type Flag struct {
 // StartAt/EndAt (锚定后偏移: Abs + Rel..)
 // StartIn/EndIn (偏移后定位: Rel + Abs..)
 func (t Time) cascade(f from, fill bool, u Unit, args ...int) Time {
-	y, month, d := t.time.Date()
-	h, mm, sec := t.time.Clock()
-	m, ns := int(month), t.time.Nanosecond()
+	y, m, d := t.Date()
+	h, mm, sec := t.Clock()
+	ns := t.time.Nanosecond()
 
 	c := Flag{
 		fill: fill,

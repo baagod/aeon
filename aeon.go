@@ -36,7 +36,7 @@ type Time struct {
 	weekStartsAt time.Weekday
 }
 
-// ---- 创建时间 ----
+// --- 创建时间 ---
 
 func New(t time.Time) Time {
 	return Time{time: t, weekStartsAt: DefaultWeekStartsAt}
@@ -50,9 +50,8 @@ func Date[M ~int](
 	year int, month M, day, hour,
 	minute, sec, nsec int, loc *time.Location,
 ) Time {
-	m := time.Month(month)
 	return Time{
-		time:         time.Date(year, m, day, hour, minute, sec, nsec, loc),
+		time:         time.Date(year, time.Month(month), day, hour, minute, sec, nsec, loc),
 		weekStartsAt: DefaultWeekStartsAt,
 	}
 }
@@ -62,12 +61,23 @@ func (t Time) WithWeekStartsAt(w time.Weekday) Time {
 	return Time{time: t.time, weekStartsAt: w}
 }
 
-// Unix 返回给定时间戳的本地时间。secs 可以是秒、毫秒或纳秒级时间戳。
+// Unix 返回给定时间戳的时间。secs 可以是秒、毫秒、微妙或纳秒级时间戳。
 func Unix(secs int64) Time {
-	if secs <= 9999999999 { // 10 位及以下，视为秒级时间戳
-		return Time{time: time.Unix(secs, 0), weekStartsAt: DefaultWeekStartsAt}
+	v := secs
+	if secs < 0 { // 处理公元前时间戳
+		v = -secs
 	}
-	return Time{time: time.Unix(0, secs), weekStartsAt: DefaultWeekStartsAt}
+
+	switch {
+	case v <= 9999999999: // 10位：秒
+		return New(time.Unix(secs, 0))
+	case v <= 9999999999999: // 13位：毫秒
+		return New(time.UnixMilli(secs))
+	case v <= 9999999999999999: // 16位：微秒
+		return New(time.UnixMicro(secs))
+	default: // 19位及以上：纳秒
+		return New(time.Unix(0, secs))
+	}
 }
 
 // ---- 获取时间 ----
@@ -108,6 +118,11 @@ func (t Time) Second(n ...int) int {
 	}
 	divisor := int(math.Pow10(9 - clamp(n[0], 1, 9)))
 	return t.time.Nanosecond() / divisor
+}
+
+func (t Time) Date() (int, int, int) {
+	y, m, d := t.time.Date()
+	return y, int(m), d
 }
 
 // Clock 返回一天中的小时、分钟和秒

@@ -1,13 +1,18 @@
 package thru
 
 import (
-	"fmt"
 	"testing"
 )
 
 func TestLog(t *testing.T) {
-	ref := Parse("2023-01-31")
-	fmt.Println(ref.JumpMonth(Overflow, 2)) // 2023-01-31 00:00:00
+	// ref := Parse("2023-01-31")
+	// fmt.Println(ref.JumpMonth(Overflow, 2)) // 2023-01-31 00:00:00
+	//
+	// tt := time.UnixMilli(1736416800000)
+	// fmt.Println(tt.Format(time.DateTime))
+	//
+	// ref = Unix(1736416800000)
+	// fmt.Println(ref)
 }
 
 func assert(t *testing.T, actual Time, expected string, msg string) {
