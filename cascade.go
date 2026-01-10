@@ -5,15 +5,15 @@ import "time"
 type from int
 
 const (
-	fromAbs    from = iota // Start/EndCentury (全绝对)
-	fromRel                // Start/EndByCentury (全相对)
-	fromAt                 // StartAt/EndCentury (定位后偏移: Abs + Rel..)
-	fromIn                 // Start/EndInCentury (偏移后定位: Rel + Abs..)
-	fromOffset             // Add 全相对不对齐
-	fromJumpAbs
-	fromJumpRel
-	fromJumpAt
-	fromJumpIn
+	fromAbs from = iota // Start/EndCentury (全绝对)
+	fromRel             // Start/EndByCentury (全相对)
+	fromAt              // StartAt/EndCentury (定位后偏移: Abs + Rel..)
+	fromIn              // Start/EndInCentury (偏移后定位: Rel + Abs..)
+	fromGoAbs
+	fromGoRel
+	fromGoAt
+	fromGoIn
+	fromOffset // Add 全相对不对齐
 )
 
 const (
@@ -31,7 +31,7 @@ type Flag struct {
 	overflow bool // 是否允许溢出
 	abs      bool // 是否使用绝对值模式 (Thru Abs)
 	fill     bool // 是否是对齐到结束 (End系列)
-	jump     bool // 是否是跳转模式 (不归零)
+	goMode   bool // 是否是跳转模式 (不归零)
 }
 
 // cascade 级联时间
@@ -46,8 +46,8 @@ func (t Time) cascade(f from, fill bool, u Unit, args ...int) Time {
 	ns := t.time.Nanosecond()
 
 	c := Flag{
-		fill: fill,
-		jump: f >= fromJumpAbs && f <= fromJumpIn,
+		fill:   fill,
+		goMode: f >= fromGoAbs && f <= fromGoIn,
 	}
 
 	// 标志位解析循环
@@ -85,17 +85,17 @@ Loop:
 		switch f {
 		case fromOffset:
 			y, m, d, h, mm, sec, ns, w = applyOffset(c, unit, p, n, y, m, d, h, mm, sec, ns, w)
-		case fromAbs, fromJumpAbs:
+		case fromAbs, fromGoAbs:
 			y, m, d, h, mm, sec, ns, w = applyAbs(c, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
-		case fromRel, fromJumpRel:
+		case fromRel, fromGoRel:
 			y, m, d, h, mm, sec, ns, w = applyRel(c, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
-		case fromAt, fromJumpAt:
+		case fromAt, fromGoAt:
 			if i == 0 {
 				y, m, d, h, mm, sec, ns, w = applyAbs(c, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
 			} else {
 				y, m, d, h, mm, sec, ns, w = applyRel(c, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
 			}
-		case fromIn, fromJumpIn:
+		case fromIn, fromGoIn:
 			if i == 0 {
 				y, m, d, h, mm, sec, ns, w = applyRel(c, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
 			} else {
@@ -106,7 +106,7 @@ Loop:
 		p = unit
 	}
 
-	if !c.jump && f != fromOffset {
+	if !c.goMode && f != fromOffset {
 		y, m, d, h, mm, sec, ns = align(c, p, y, m, d, h, mm, sec, ns)
 	}
 
@@ -306,92 +306,92 @@ func (t Time) EndInWeek(n ...int) Time     { return t.cascade(fromIn, true, Week
 func (t Time) EndInWeekday(n ...int) Time  { return t.cascade(fromIn, true, Weekday, n...) }
 func (t Time) EndInYearWeek(n ...int) Time { return t.cascade(fromIn, true, YearWeek, n...) }
 
-// --- Jump 系列的绝对年方法 ---
+// --- Go 系列的绝对年方法 ---
 
-func (t Time) Jump(n ...int) Time {
-	return t.cascade(fromJumpAbs, false, Year, append([]int{ABS}, n...)...)
+func (t Time) Go(n ...int) Time {
+	return t.cascade(fromGoAbs, false, Year, append([]int{ABS}, n...)...)
 }
 
-func (t Time) JumpBy(n ...int) Time {
-	return t.cascade(fromJumpRel, false, Year, append([]int{ABS}, n...)...)
+func (t Time) GoBy(n ...int) Time {
+	return t.cascade(fromGoRel, false, Year, append([]int{ABS}, n...)...)
 }
 
-func (t Time) JumpAt(n ...int) Time {
-	return t.cascade(fromJumpAt, false, Year, append([]int{ABS}, n...)...)
+func (t Time) GoAt(n ...int) Time {
+	return t.cascade(fromGoAt, false, Year, append([]int{ABS}, n...)...)
 }
 
-func (t Time) JumpIn(n ...int) Time {
-	return t.cascade(fromJumpIn, false, Year, append([]int{ABS}, n...)...)
+func (t Time) GoIn(n ...int) Time {
+	return t.cascade(fromGoIn, false, Year, append([]int{ABS}, n...)...)
 }
 
 // --- Start 的保留精度版本 ---
 
-func (t Time) JumpCentury(n ...int) Time  { return t.cascade(fromJumpAbs, false, Century, n...) }
-func (t Time) JumpDecade(n ...int) Time   { return t.cascade(fromJumpAbs, false, Decade, n...) }
-func (t Time) JumpYear(n ...int) Time     { return t.cascade(fromJumpAbs, false, Year, n...) }
-func (t Time) JumpMonth(n ...int) Time    { return t.cascade(fromJumpAbs, false, Month, n...) }
-func (t Time) JumpDay(n ...int) Time      { return t.cascade(fromJumpAbs, false, Day, n...) }
-func (t Time) JumpHour(n ...int) Time     { return t.cascade(fromJumpAbs, false, Hour, n...) }
-func (t Time) JumpMinute(n ...int) Time   { return t.cascade(fromJumpAbs, false, Minute, n...) }
-func (t Time) JumpSecond(n ...int) Time   { return t.cascade(fromJumpAbs, false, Second, n...) }
-func (t Time) JumpMilli(n ...int) Time    { return t.cascade(fromJumpAbs, false, Millisecond, n...) }
-func (t Time) JumpMicro(n ...int) Time    { return t.cascade(fromJumpAbs, false, Microsecond, n...) }
-func (t Time) JumpNano(n ...int) Time     { return t.cascade(fromJumpAbs, false, Nanosecond, n...) }
-func (t Time) JumpQuarter(n ...int) Time  { return t.cascade(fromJumpAbs, false, Quarter, n...) }
-func (t Time) JumpWeek(n ...int) Time     { return t.cascade(fromJumpAbs, false, Week, n...) }
-func (t Time) JumpWeekday(n ...int) Time  { return t.cascade(fromJumpAbs, false, Weekday, n...) }
-func (t Time) JumpYearWeek(n ...int) Time { return t.cascade(fromJumpAbs, false, YearWeek, n...) }
+func (t Time) GoCentury(n ...int) Time  { return t.cascade(fromGoAbs, false, Century, n...) }
+func (t Time) GoDecade(n ...int) Time   { return t.cascade(fromGoAbs, false, Decade, n...) }
+func (t Time) GoYear(n ...int) Time     { return t.cascade(fromGoAbs, false, Year, n...) }
+func (t Time) GoMonth(n ...int) Time    { return t.cascade(fromGoAbs, false, Month, n...) }
+func (t Time) GoDay(n ...int) Time      { return t.cascade(fromGoAbs, false, Day, n...) }
+func (t Time) GoHour(n ...int) Time     { return t.cascade(fromGoAbs, false, Hour, n...) }
+func (t Time) GoMinute(n ...int) Time   { return t.cascade(fromGoAbs, false, Minute, n...) }
+func (t Time) GoSecond(n ...int) Time   { return t.cascade(fromGoAbs, false, Second, n...) }
+func (t Time) GoMilli(n ...int) Time    { return t.cascade(fromGoAbs, false, Millisecond, n...) }
+func (t Time) GoMicro(n ...int) Time    { return t.cascade(fromGoAbs, false, Microsecond, n...) }
+func (t Time) GoNano(n ...int) Time     { return t.cascade(fromGoAbs, false, Nanosecond, n...) }
+func (t Time) GoQuarter(n ...int) Time  { return t.cascade(fromGoAbs, false, Quarter, n...) }
+func (t Time) GoWeek(n ...int) Time     { return t.cascade(fromGoAbs, false, Week, n...) }
+func (t Time) GoWeekday(n ...int) Time  { return t.cascade(fromGoAbs, false, Weekday, n...) }
+func (t Time) GoYearWeek(n ...int) Time { return t.cascade(fromGoAbs, false, YearWeek, n...) }
 
 // --- StartBy 的保留精度版本 ---
 
-func (t Time) JumpByCentury(n ...int) Time  { return t.cascade(fromJumpRel, false, Century, n...) }
-func (t Time) JumpByDecade(n ...int) Time   { return t.cascade(fromJumpRel, false, Decade, n...) }
-func (t Time) JumpByYear(n ...int) Time     { return t.cascade(fromJumpRel, false, Year, n...) }
-func (t Time) JumpByMonth(n ...int) Time    { return t.cascade(fromJumpRel, false, Month, n...) }
-func (t Time) JumpByDay(n ...int) Time      { return t.cascade(fromJumpRel, false, Day, n...) }
-func (t Time) JumpByHour(n ...int) Time     { return t.cascade(fromJumpRel, false, Hour, n...) }
-func (t Time) JumpByMinute(n ...int) Time   { return t.cascade(fromJumpRel, false, Minute, n...) }
-func (t Time) JumpBySecond(n ...int) Time   { return t.cascade(fromJumpRel, false, Second, n...) }
-func (t Time) JumpByMilli(n ...int) Time    { return t.cascade(fromJumpRel, false, Millisecond, n...) }
-func (t Time) JumpByMicro(n ...int) Time    { return t.cascade(fromJumpRel, false, Microsecond, n...) }
-func (t Time) JumpByNano(n ...int) Time     { return t.cascade(fromJumpRel, false, Nanosecond, n...) }
-func (t Time) JumpByQuarter(n ...int) Time  { return t.cascade(fromJumpRel, false, Quarter, n...) }
-func (t Time) JumpByWeek(n ...int) Time     { return t.cascade(fromJumpRel, false, Week, n...) }
-func (t Time) JumpByWeekday(n ...int) Time  { return t.cascade(fromJumpRel, false, Weekday, n...) }
-func (t Time) JumpByYearWeek(n ...int) Time { return t.cascade(fromJumpRel, false, YearWeek, n...) }
+func (t Time) GoByCentury(n ...int) Time  { return t.cascade(fromGoRel, false, Century, n...) }
+func (t Time) GoByDecade(n ...int) Time   { return t.cascade(fromGoRel, false, Decade, n...) }
+func (t Time) GoByYear(n ...int) Time     { return t.cascade(fromGoRel, false, Year, n...) }
+func (t Time) GoByMonth(n ...int) Time    { return t.cascade(fromGoRel, false, Month, n...) }
+func (t Time) GoByDay(n ...int) Time      { return t.cascade(fromGoRel, false, Day, n...) }
+func (t Time) GoByHour(n ...int) Time     { return t.cascade(fromGoRel, false, Hour, n...) }
+func (t Time) GoByMinute(n ...int) Time   { return t.cascade(fromGoRel, false, Minute, n...) }
+func (t Time) GoBySecond(n ...int) Time   { return t.cascade(fromGoRel, false, Second, n...) }
+func (t Time) GoByMilli(n ...int) Time    { return t.cascade(fromGoRel, false, Millisecond, n...) }
+func (t Time) GoByMicro(n ...int) Time    { return t.cascade(fromGoRel, false, Microsecond, n...) }
+func (t Time) GoByNano(n ...int) Time     { return t.cascade(fromGoRel, false, Nanosecond, n...) }
+func (t Time) GoByQuarter(n ...int) Time  { return t.cascade(fromGoRel, false, Quarter, n...) }
+func (t Time) GoByWeek(n ...int) Time     { return t.cascade(fromGoRel, false, Week, n...) }
+func (t Time) GoByWeekday(n ...int) Time  { return t.cascade(fromGoRel, false, Weekday, n...) }
+func (t Time) GoByYearWeek(n ...int) Time { return t.cascade(fromGoRel, false, YearWeek, n...) }
 
 // --- StartAt 的保留精度版本 ---
 
-func (t Time) JumpAtCentury(n ...int) Time  { return t.cascade(fromJumpAt, false, Century, n...) }
-func (t Time) JumpAtDecade(n ...int) Time   { return t.cascade(fromJumpAt, false, Decade, n...) }
-func (t Time) JumpAtYear(n ...int) Time     { return t.cascade(fromJumpAt, false, Year, n...) }
-func (t Time) JumpAtMonth(n ...int) Time    { return t.cascade(fromJumpAt, false, Month, n...) }
-func (t Time) JumpAtDay(n ...int) Time      { return t.cascade(fromJumpAt, false, Day, n...) }
-func (t Time) JumpAtHour(n ...int) Time     { return t.cascade(fromJumpAt, false, Hour, n...) }
-func (t Time) JumpAtMinute(n ...int) Time   { return t.cascade(fromJumpAt, false, Minute, n...) }
-func (t Time) JumpAtSecond(n ...int) Time   { return t.cascade(fromJumpAt, false, Second, n...) }
-func (t Time) JumpAtMilli(n ...int) Time    { return t.cascade(fromJumpAt, false, Millisecond, n...) }
-func (t Time) JumpAtMicro(n ...int) Time    { return t.cascade(fromJumpAt, false, Microsecond, n...) }
-func (t Time) JumpAtNano(n ...int) Time     { return t.cascade(fromJumpAt, false, Nanosecond, n...) }
-func (t Time) JumpAtQuarter(n ...int) Time  { return t.cascade(fromJumpAt, false, Quarter, n...) }
-func (t Time) JumpAtWeek(n ...int) Time     { return t.cascade(fromJumpAt, false, Week, n...) }
-func (t Time) JumpAtWeekday(n ...int) Time  { return t.cascade(fromJumpAt, false, Weekday, n...) }
-func (t Time) JumpAtYearWeek(n ...int) Time { return t.cascade(fromJumpAt, false, YearWeek, n...) }
+func (t Time) GoAtCentury(n ...int) Time  { return t.cascade(fromGoAt, false, Century, n...) }
+func (t Time) GoAtDecade(n ...int) Time   { return t.cascade(fromGoAt, false, Decade, n...) }
+func (t Time) GoAtYear(n ...int) Time     { return t.cascade(fromGoAt, false, Year, n...) }
+func (t Time) GoAtMonth(n ...int) Time    { return t.cascade(fromGoAt, false, Month, n...) }
+func (t Time) GoAtDay(n ...int) Time      { return t.cascade(fromGoAt, false, Day, n...) }
+func (t Time) GoAtHour(n ...int) Time     { return t.cascade(fromGoAt, false, Hour, n...) }
+func (t Time) GoAtMinute(n ...int) Time   { return t.cascade(fromGoAt, false, Minute, n...) }
+func (t Time) GoAtSecond(n ...int) Time   { return t.cascade(fromGoAt, false, Second, n...) }
+func (t Time) GoAtMilli(n ...int) Time    { return t.cascade(fromGoAt, false, Millisecond, n...) }
+func (t Time) GoAtMicro(n ...int) Time    { return t.cascade(fromGoAt, false, Microsecond, n...) }
+func (t Time) GoAtNano(n ...int) Time     { return t.cascade(fromGoAt, false, Nanosecond, n...) }
+func (t Time) GoAtQuarter(n ...int) Time  { return t.cascade(fromGoAt, false, Quarter, n...) }
+func (t Time) GoAtWeek(n ...int) Time     { return t.cascade(fromGoAt, false, Week, n...) }
+func (t Time) GoAtWeekday(n ...int) Time  { return t.cascade(fromGoAt, false, Weekday, n...) }
+func (t Time) GoAtYearWeek(n ...int) Time { return t.cascade(fromGoAt, false, YearWeek, n...) }
 
 // --- StartIn 的保留精度版本 ---
 
-func (t Time) JumpInCentury(n ...int) Time  { return t.cascade(fromJumpIn, false, Century, n...) }
-func (t Time) JumpInDecade(n ...int) Time   { return t.cascade(fromJumpIn, false, Decade, n...) }
-func (t Time) JumpInYear(n ...int) Time     { return t.cascade(fromJumpIn, false, Year, n...) }
-func (t Time) JumpInMonth(n ...int) Time    { return t.cascade(fromJumpIn, false, Month, n...) }
-func (t Time) JumpInDay(n ...int) Time      { return t.cascade(fromJumpIn, false, Day, n...) }
-func (t Time) JumpInHour(n ...int) Time     { return t.cascade(fromJumpIn, false, Hour, n...) }
-func (t Time) JumpInMinute(n ...int) Time   { return t.cascade(fromJumpIn, false, Minute, n...) }
-func (t Time) JumpInSecond(n ...int) Time   { return t.cascade(fromJumpIn, false, Second, n...) }
-func (t Time) JumpInMilli(n ...int) Time    { return t.cascade(fromJumpIn, false, Millisecond, n...) }
-func (t Time) JumpInMicro(n ...int) Time    { return t.cascade(fromJumpIn, false, Microsecond, n...) }
-func (t Time) JumpInNano(n ...int) Time     { return t.cascade(fromJumpIn, false, Nanosecond, n...) }
-func (t Time) JumpInQuarter(n ...int) Time  { return t.cascade(fromJumpIn, false, Quarter, n...) }
-func (t Time) JumpInWeek(n ...int) Time     { return t.cascade(fromJumpIn, false, Week, n...) }
-func (t Time) JumpInWeekday(n ...int) Time  { return t.cascade(fromJumpIn, false, Weekday, n...) }
-func (t Time) JumpInYearWeek(n ...int) Time { return t.cascade(fromJumpIn, false, YearWeek, n...) }
+func (t Time) GoInCentury(n ...int) Time  { return t.cascade(fromGoIn, false, Century, n...) }
+func (t Time) GoInDecade(n ...int) Time   { return t.cascade(fromGoIn, false, Decade, n...) }
+func (t Time) GoInYear(n ...int) Time     { return t.cascade(fromGoIn, false, Year, n...) }
+func (t Time) GoInMonth(n ...int) Time    { return t.cascade(fromGoIn, false, Month, n...) }
+func (t Time) GoInDay(n ...int) Time      { return t.cascade(fromGoIn, false, Day, n...) }
+func (t Time) GoInHour(n ...int) Time     { return t.cascade(fromGoIn, false, Hour, n...) }
+func (t Time) GoInMinute(n ...int) Time   { return t.cascade(fromGoIn, false, Minute, n...) }
+func (t Time) GoInSecond(n ...int) Time   { return t.cascade(fromGoIn, false, Second, n...) }
+func (t Time) GoInMilli(n ...int) Time    { return t.cascade(fromGoIn, false, Millisecond, n...) }
+func (t Time) GoInMicro(n ...int) Time    { return t.cascade(fromGoIn, false, Microsecond, n...) }
+func (t Time) GoInNano(n ...int) Time     { return t.cascade(fromGoIn, false, Nanosecond, n...) }
+func (t Time) GoInQuarter(n ...int) Time  { return t.cascade(fromGoIn, false, Quarter, n...) }
+func (t Time) GoInWeek(n ...int) Time     { return t.cascade(fromGoIn, false, Week, n...) }
+func (t Time) GoInWeekday(n ...int) Time  { return t.cascade(fromGoIn, false, Weekday, n...) }
+func (t Time) GoInYearWeek(n ...int) Time { return t.cascade(fromGoIn, false, YearWeek, n...) }
