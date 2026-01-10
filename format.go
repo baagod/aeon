@@ -30,26 +30,50 @@ const (
 )
 
 var Formats = []string{
-	Layout,
+	// 1. 现代 API 最常用格式 (优先匹配长格式)
+	DateTime,    // "2006-01-02 15:04:05"
+	DateOnly,    // "2006-01-02"
+	RFC3339,     // "2006-01-02T15:04:05Z07:00"
+	RFC3339Nano, // "2006-01-02T15:04:05.999999999Z07:00"
+	"2006-01-02 15:04:05.999999999",
+	"2006-01-02 15:04:05.999999999 -0700 MST",
+
+	// 2. 带点号的变体 (点号不可替换)
+	"2006.01.02 15:04:05.999999999",
+	"2006.01.02 15:04:05",
+	"2006.01.02",
+	"2006.1.2 15:04:05",
+	"2006.1.2",
+
+	// 3. 标准库命名格式
+	RFC1123Z,
+	RFC1123,
+	RFC822Z,
+	RFC822,
 	ANSIC,
 	UnixDate,
 	RubyDate,
-	RFC822,
-	RFC822Z,
 	RFC850,
-	RFC1123,
-	RFC1123Z,
-	RFC3339,
-	RFC3339Nano,
 	Kitchen,
-	// Handy time stamps.
-	Stamp,
-	StampMilli,
-	StampMicro,
+
+	// 4. 时间戳系列
 	StampNano,
-	DateTime,
-	DateOnly,
-	TimeOnly,
+	StampMicro,
+	StampMilli,
+	Stamp,
+
+	// 5. now 补全的紧凑型与宽松格式
+	"20060102",
+	"2006-1-2 15:4:5",
+	"2006-1-2 15:4",
+	"2006-1-2 15",
+	"2006-1-2",
+	TimeOnly, // "15:04:05"
+	"15:4:5",
+	"15:4",
+	"15",
+	"1-2",  // 月-日
+	"2006", // 年
 }
 
 // --- 格式化时间 ---
@@ -172,6 +196,9 @@ func ParseE(s string, loc ...*time.Location) (Time, error) {
 	if s == "" || s == "null" {
 		return Time{}, nil
 	}
+
+	// 统一分隔符优化性能与兼容性
+	s = strings.ReplaceAll(s, "/", "-")
 
 	l := time.Local
 	if len(loc) > 0 && loc[0] != nil {
