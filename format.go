@@ -28,24 +28,41 @@ const (
 	DateTimeNano  = "2006-01-02 15:04:05.999999999"
 	DateOnly      = "2006-01-02"
 	TimeOnly      = "15:04:05"
+
+	DateTimeFull      = "2006-01-02 15:04:05.999999999 -0700 MST"
+	DateDotTimeNano   = "2006.01.02 15:04:05.999999999"
+	DateDotTime       = "2006.01.02 15:04:05"
+	DateDotOnly       = "2006.01.02"
+	DateDotTimeShort  = "2006.1.2 15:04:05"
+	DateDotOnlyShort  = "2006.1.2"
+	DateCompact       = "20060102"
+	DateTimeVeryShort = "2006-1-2 15:4:5"
+	DateTimeShort     = "2006-1-2 15:4"
+	DateHourShort     = "2006-1-2 15"
+	DateOnlyShort     = "2006-1-2"
+	TimeVeryShort     = "15:4:5"
+	TimeShort         = "15:4"
+	HourOnly          = "15"
+	MonthDay          = "1-2"
+	YearOnly          = "2006"
 )
 
 var Formats = []string{
-	// 1. 现代 API 最常用格式 (优先匹配长格式)
-	DateTime,      // "2006-01-02 15:04:05"
-	DateTimeMilli, // "2006-01-02 15:04:05.000"
-	DateTimeNano,  // "2006-01-02 15:04:05.999999999"
-	DateOnly,      // "2006-01-02"
-	RFC3339,       // "2006-01-02T15:04:05Z07:00"
-	RFC3339Nano,   // "2006-01-02T15:04:05.999999999Z07:00"
-	"2006-01-02 15:04:05.999999999 -0700 MST",
+	// 1. 现代 API 最常用格式 (优先匹配 long 格式)
+	DateTime,
+	DateTimeMilli,
+	DateTimeNano,
+	DateOnly,
+	RFC3339,
+	RFC3339Nano,
+	DateTimeFull,
 
 	// 2. 带点号的变体 (点号不可替换)
-	"2006.01.02 15:04:05.999999999",
-	"2006.01.02 15:04:05",
-	"2006.01.02",
-	"2006.1.2 15:04:05",
-	"2006.1.2",
+	DateDotTimeNano,
+	DateDotTime,
+	DateDotOnly,
+	DateDotTimeShort,
+	DateDotOnlyShort,
 
 	// 3. 标准库命名格式
 	RFC1123Z,
@@ -65,17 +82,17 @@ var Formats = []string{
 	Stamp,
 
 	// 5. now 补全的紧凑型与宽松格式
-	"20060102",
-	"2006-1-2 15:4:5",
-	"2006-1-2 15:4",
-	"2006-1-2 15",
-	"2006-1-2",
-	TimeOnly, // "15:04:05"
-	"15:4:5",
-	"15:4",
-	"15",
-	"1-2",  // 月-日
-	"2006", // 年
+	DateCompact,
+	DateTimeVeryShort,
+	DateTimeShort,
+	DateHourShort,
+	DateOnlyShort,
+	TimeOnly,
+	TimeVeryShort,
+	TimeShort,
+	HourOnly,
+	MonthDay,
+	YearOnly,
 }
 
 // --- 格式化时间 ---
@@ -228,7 +245,7 @@ type MilliTime = F[milliFormat]
 
 // ParseE 解析 value 并返回它所表示的时间
 func ParseE(s string, loc ...*time.Location) (Time, error) {
-	s = strings.Trim(strings.TrimSpace(s), `"`)
+	s = strings.Trim(strings.TrimSpace(s), "\"")
 	if s == "" || s == "null" {
 		return Time{}, nil
 	}
@@ -256,16 +273,17 @@ func Parse(value string, loc ...*time.Location) Time {
 	return t
 }
 
-func ParseByLayoutE(layout string, value string, loc ...*time.Location) (Time, error) {
-	if loc == nil {
-		loc = append(loc, time.Local)
+func ParseByE(layout string, value string, loc ...*time.Location) (Time, error) {
+	l := time.Local
+	if len(loc) > 0 && loc[0] != nil {
+		l = loc[0]
 	}
-	pt, err := time.ParseInLocation(layout, value, loc[0])
+	pt, err := time.ParseInLocation(layout, value, l)
 	return Time{time: pt, weekStarts: DefaultWeekStartsAt}, err
 }
 
-func ParseByLayout(layout string, value string, loc ...*time.Location) Time {
-	t, _ := ParseByLayoutE(layout, value, loc...)
+func ParseBy(layout string, value string, loc ...*time.Location) Time {
+	t, _ := ParseByE(layout, value, loc...)
 	return t
 }
 
@@ -281,4 +299,8 @@ func (t Time) AppendFormat(b []byte, layout string) []byte {
 
 func (t Time) String() string {
 	return t.time.Format(DateTimeNano)
+}
+
+func (t Time) ToString(f string) string {
+	return t.time.Format(f)
 }
