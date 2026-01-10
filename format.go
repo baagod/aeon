@@ -96,6 +96,17 @@ func (t *Time) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
+func (t Time) MarshalText() ([]byte, error) {
+	if t.IsZero() {
+		return []byte(""), nil // 文本格式零值通常为空
+	}
+	return []byte(t.String()), nil
+}
+
+func (t *Time) UnmarshalText(data []byte) error {
+	return t.UnmarshalJSON(data)
+}
+
 // Scan 由 DB 转到 Go 时调用
 func (t *Time) Scan(value any) (err error) {
 	switch v := value.(type) {
@@ -115,17 +126,6 @@ func (t Time) Value() (v driver.Value, err error) {
 		v = t.time
 	}
 	return
-}
-
-func (t Time) MarshalText() ([]byte, error) {
-	if t.IsZero() {
-		return []byte(""), nil // 文本格式零值通常为空
-	}
-	return []byte(t.String()), nil
-}
-
-func (t *Time) UnmarshalText(data []byte) error {
-	return t.UnmarshalJSON(data)
 }
 
 // --- 自定义 JSON 格式 ---
@@ -176,6 +176,20 @@ func (f F[T]) MarshalJSON() ([]byte, error) {
 func (f *F[T]) UnmarshalJSON(b []byte) (err error) {
 	f.Time, err = ParseE(string(b), f.Location())
 	return
+}
+
+// MarshalText 实现 encoding.TextMarshaler 接口
+func (f F[T]) MarshalText() ([]byte, error) {
+	if f.IsZero() {
+		return []byte(""), nil
+	}
+	// 使用 F.layout() 而不是 Time.String()
+	return []byte(f.Format(f.layout())), nil
+}
+
+// UnmarshalText 实现 encoding.TextUnmarshaler 接口
+func (f *F[T]) UnmarshalText(data []byte) error {
+	return f.UnmarshalJSON(data)
 }
 
 // Scan 实现 sql.Scanner 接口
@@ -243,6 +257,8 @@ func ParseByLayout(layout string, value string, loc ...*time.Location) Time {
 	t, _ := ParseByLayoutE(layout, value, loc...)
 	return t
 }
+
+// -- 时间格式 ---
 
 func (t Time) Format(layout string) string {
 	return t.time.Format(layout)

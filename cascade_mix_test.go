@@ -14,7 +14,7 @@ func TestMixSeriesDevilMatrix(t *testing.T) {
 		assert(t, base.StartAtYear(5, 1), "2025-05-01 00:00:00", "StartAtYear(5, 1)")
 
 		// 2. EndAtMonth(6, 5): 定位到 6 月，然后加 5 天
-		// 2024-06-15 -> 2024-06-20 -> final(End) -> 2024-06-20 23:59:59.999999999
+		// 2024-06-15 -> 2024-06-20 -> final(EndCentury) -> 2024-06-20 23:59:59.999999999
 		assert(t, base.EndAtMonth(6, 5), "2024-06-20 23:59:59.999999999", "EndAtMonth(6, 5)")
 
 		// 3. EndInYear(-1, 6): 回跳 1 年，然后定位到 6 月末
@@ -24,7 +24,7 @@ func TestMixSeriesDevilMatrix(t *testing.T) {
 		// 2024-04-15 -> 2024-06-15 -> 2024-06-20 -> final -> 2024-06-20 23:59:59.999999999
 		assert(t, base.EndInMonth(2, 20), "2024-06-20 23:59:59.999999999", "EndInMonth(2, 20)")
 
-		// 6. EndAtMonth(2, -5): 定位到 2 月 -> 2024-02-15 | Rel Day(-5) -> 2024-02-10 | End 对齐
+		// 6. EndAtMonth(2, -5): 定位到 2 月 -> 2024-02-15 | Rel Day(-5) -> 2024-02-10 | EndCentury 对齐
 		assert(t, base.EndAtMonth(2, -5), "2024-02-10 23:59:59.999999999", "EndAtMonth(2, -5)")
 
 	})
@@ -48,7 +48,7 @@ func TestMixSeriesDevilMatrix(t *testing.T) {
 		// 1. StartAtMilli(501, 1)
 		// Abs Milli(501) -> 501ms
 		// Rel Micro(1) -> 501ms + 1us = .501001
-		// Start -> .501001000
+		// StartCentury -> .501001000
 		assert(t, base.StartAtMilli(501, 1), "2024-01-01 00:00:00.501001", "StartAtMilli(501, 1)")
 	})
 }

@@ -33,7 +33,7 @@ func TestBySeriesDevilMatrix(t *testing.T) {
 		assert(t, ref.StartByYearWeek(ISO, 1), "2026-01-05 00:00:00", "2026-01-02下个ISO周首")
 	})
 
-	t.Run("动态账期末 (EndBy)", func(t *testing.T) {
+	t.Run("动态账期末 (EndByCentury)", func(t *testing.T) {
 		ref := Parse("2024-04-15 10:00:00")
 		// 下个月的前一天结束: EndByMonth(1, -1)
 		assert(t, ref.EndByMonth(1, -1), "2024-05-14 23:59:59.999999999", "下月账期前一天结束")
@@ -59,16 +59,16 @@ func TestBySeriesDevilMatrix(t *testing.T) {
 	t.Run("Oracle 极端用例矩阵", func(t *testing.T) {
 		// 1. 跨世纪的“量子坍缩”级联 (Century-Decade-Year Cascade)
 		// 基准: 2024-02-29 (闰日)
-		// StartBy(0,0,0,1,-1) -> Century(0)使y=2000 -> Month(1)使m=3 -> Day(-1)使d=28
+		// StartByCentury(0,0,0,1,-1) -> Century(0)使y=2000 -> Month(1)使m=3 -> Day(-1)使d=28
 		ref闰日 := Parse("2024-02-29 12:00:00")
-		assert(t, ref闰日.StartBy(0, 0, 0, 1, -1), "2000-03-28 00:00:00", "跨世纪零位移坍缩")
+		assert(t, ref闰日.StartByCentury(0, 0, 0, 1, -1), "2000-03-28 00:00:00", "跨世纪零位移坍缩")
 
 		// 2. “溢出模式”全局压测 (Overflow Flag Natural Rollover)
 		// 基准: 2024-01-31. Month(1) -> 03-02. Day(40) + Overflow -> 自然滑动到 4/11
 		refJan31 := Parse("2024-01-31 12:00:00")
 		assert(t, refJan31.StartByMonth(Overflow, 1, 40), "2024-04-11 00:00:00", "Overflow开启自然溢出")
 
-		// 3. “时空倒流”的末端对齐 (EndBy with Multi-Negative Offsets)
+		// 3. “时空倒流”的末端对齐 (EndByCentury with Multi-Negative Offsets)
 		// 2024-05-15 (Q2). Quarter(-1) -> 1/15 -> final(end)使m=3 -> 3/15. Month(-1) -> 2/15. Day(-1) -> 2/14.
 		refQ2 := Parse("2024-05-15 12:00:00")
 		assert(t, refQ2.EndByQuarter(-1, -1, -1), "2024-02-14 23:59:59.999999999", "EndBy负向级联")
@@ -78,10 +78,10 @@ func TestBySeriesDevilMatrix(t *testing.T) {
 		refISO := Parse("2026-01-01 12:00:00")
 		assert(t, refISO.StartByYearWeek(ISO, 0, 0), "2025-12-29 00:00:00", "ISO跨年周对齐")
 
-		// 5. “世纪末的最后冲刺” (Extreme End-of-Century Cascade)
+		// 5. “世纪末的最后冲刺” (Extreme EndCentury-of-Century Cascade)
 		// Century(0)使y=2099 -> Decade(-1)使y=2089 -> Year(-1)使y=2088 -> Month(-1)使y=2087, m=12
 		refCentury := Parse("2024-01-01 12:00:00")
-		assert(t, refCentury.EndBy(0, -1, -1, -1), "2087-12-31 23:59:59.999999999", "世纪末深度级联")
+		assert(t, refCentury.EndByCentury(0, -1, -1, -1), "2087-12-31 23:59:59.999999999", "世纪末深度级联")
 	})
 
 	t.Run("验证大单位End模式的边界完整性", func(t *testing.T) {
@@ -103,10 +103,10 @@ func TestBySeriesDevilMatrix(t *testing.T) {
 		// 基准: .000
 		ref := Parse("2024-01-01 00:00:00")
 
-		// 1. StartByMilli(1): +1ms -> .001. Start(归零) -> .001000000
+		// 1. StartByMilli(1): +1ms -> .001. StartCentury(归零) -> .001000000
 		assert(t, ref.StartByMilli(1), "2024-01-01 00:00:00.001", "StartByMilli(1)")
 
-		// 2. EndByMicro(1): +1us -> .000001. End(置满) -> .000001999 (Micro只管后面纳秒置满)
+		// 2. EndByMicro(1): +1us -> .000001. EndCentury(置满) -> .000001999 (Micro只管后面纳秒置满)
 		// Microsecond 对齐逻辑: ns = (ns/1e3)*1e3 + 999
 		assert(t, ref.EndByMicro(1), "2024-01-01 00:00:00.000001999", "EndByMicro(1)")
 	})

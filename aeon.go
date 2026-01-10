@@ -148,11 +148,6 @@ func (t Time) ISOWeek() (year, week int) {
 	return t.time.ISOWeek()
 }
 
-// Zone 获取当前时区的名称和偏移量
-func (t Time) Zone() (name string, offset int) {
-	return t.time.Zone()
-}
-
 // YearDay 返回一年中的第几天，非闰年范围 [1,365]，闰年范围 [1,366]。
 func (t Time) YearDay() int {
 	return t.time.YearDay()
@@ -273,6 +268,11 @@ func (t Time) Location() *time.Location {
 	return t.time.Location()
 }
 
+// Zone 获取当前时区的名称和偏移量
+func (t Time) Zone() (name string, offset int) {
+	return t.time.Zone()
+}
+
 // ---- 比较时间 ----
 
 // Diff 返回 t 和 u 的时间差。
@@ -351,7 +351,7 @@ func Until(t Time) time.Duration {
 	return time.Until(t.time)
 }
 
-// ---- 其他 ----
+// --- 其他 ---
 
 // IsZero 返回 t 是否零时，即 0001-01-01 00:00:00 UTC。
 func (t Time) IsZero() bool {

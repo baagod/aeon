@@ -5,10 +5,10 @@ import "time"
 type from int
 
 const (
-	fromAbs    from = iota // Start/End (全绝对)
-	fromRel                // StartBy/EndBy (全相对)
-	fromAt                 // StartAt/EndAt (定位后偏移: Abs + Rel..)
-	fromIn                 // StartIn/EndIn (偏移后定位: Rel + Abs..)
+	fromAbs    from = iota // Start/EndCentury (全绝对)
+	fromRel                // Start/EndByCentury (全相对)
+	fromAt                 // StartAt/EndCentury (定位后偏移: Abs + Rel..)
+	fromIn                 // Start/EndInCentury (偏移后定位: Rel + Abs..)
 	fromOffset             // Add 全相对不对齐
 	fromJumpAbs
 	fromJumpRel
@@ -35,10 +35,11 @@ type Flag struct {
 }
 
 // cascade 级联时间
-// Start/End (全绝对)
-// StartBy/EndBy (全相对)
-// StartAt/EndAt (锚定后偏移: Abs + Rel..)
-// StartIn/EndIn (偏移后定位: Rel + Abs..)
+// Start/EndCentury (全绝对)
+// Start/EndByCentury (全相对)
+// StartAt/EndCentury (定位后偏移: Abs + Rel..)
+// Start/EndInCentury (偏移后定位: Rel + Abs..)
+// Add 全相对不对齐
 func (t Time) cascade(f from, fill bool, u Unit, args ...int) Time {
 	y, m, d := t.Date()
 	h, mm, sec := t.Clock()
@@ -139,7 +140,15 @@ func (t Time) AddYearWeek(n ...int) Time { return t.cascade(fromOffset, false, Y
 
 // --- 全绝对定位级联 ---
 
-func (t Time) Start(n ...int) Time         { return t.cascade(fromAbs, false, Century, n...) }
+func (t Time) Start(n ...int) Time {
+	return t.cascade(fromAbs, false, Year, append([]int{ABS}, n...)...)
+}
+
+func (t Time) End(n ...int) Time {
+	return t.cascade(fromAbs, true, Year, append([]int{ABS}, n...)...)
+}
+
+func (t Time) StartCentury(n ...int) Time  { return t.cascade(fromAbs, false, Century, n...) }
 func (t Time) StartDecade(n ...int) Time   { return t.cascade(fromAbs, false, Decade, n...) }
 func (t Time) StartYear(n ...int) Time     { return t.cascade(fromAbs, false, Year, n...) }
 func (t Time) StartMonth(n ...int) Time    { return t.cascade(fromAbs, false, Month, n...) }
@@ -155,7 +164,7 @@ func (t Time) StartWeek(n ...int) Time     { return t.cascade(fromAbs, false, We
 func (t Time) StartWeekday(n ...int) Time  { return t.cascade(fromAbs, false, Weekday, n...) }
 func (t Time) StartYearWeek(n ...int) Time { return t.cascade(fromAbs, false, YearWeek, n...) }
 
-func (t Time) End(n ...int) Time         { return t.cascade(fromAbs, true, Century, n...) }
+func (t Time) EndCentury(n ...int) Time  { return t.cascade(fromAbs, true, Century, n...) }
 func (t Time) EndDecade(n ...int) Time   { return t.cascade(fromAbs, true, Decade, n...) }
 func (t Time) EndYear(n ...int) Time     { return t.cascade(fromAbs, true, Year, n...) }
 func (t Time) EndMonth(n ...int) Time    { return t.cascade(fromAbs, true, Month, n...) }
@@ -173,7 +182,15 @@ func (t Time) EndYearWeek(n ...int) Time { return t.cascade(fromAbs, true, YearW
 
 // --- 全相对定位级联 ---
 
-func (t Time) StartBy(n ...int) Time         { return t.cascade(fromRel, false, Century, n...) }
+func (t Time) StartBy(n ...int) Time {
+	return t.cascade(fromRel, false, Year, append([]int{ABS}, n...)...)
+}
+
+func (t Time) EndBy(n ...int) Time {
+	return t.cascade(fromRel, true, Year, append([]int{ABS}, n...)...)
+}
+
+func (t Time) StartByCentury(n ...int) Time  { return t.cascade(fromRel, false, Century, n...) }
 func (t Time) StartByDecade(n ...int) Time   { return t.cascade(fromRel, false, Decade, n...) }
 func (t Time) StartByYear(n ...int) Time     { return t.cascade(fromRel, false, Year, n...) }
 func (t Time) StartByMonth(n ...int) Time    { return t.cascade(fromRel, false, Month, n...) }
@@ -189,7 +206,7 @@ func (t Time) StartByWeek(n ...int) Time     { return t.cascade(fromRel, false, 
 func (t Time) StartByWeekday(n ...int) Time  { return t.cascade(fromRel, false, Weekday, n...) }
 func (t Time) StartByYearWeek(n ...int) Time { return t.cascade(fromRel, false, YearWeek, n...) }
 
-func (t Time) EndBy(n ...int) Time         { return t.cascade(fromRel, true, Century, n...) }
+func (t Time) EndByCentury(n ...int) Time  { return t.cascade(fromRel, true, Century, n...) }
 func (t Time) EndByDecade(n ...int) Time   { return t.cascade(fromRel, true, Decade, n...) }
 func (t Time) EndByYear(n ...int) Time     { return t.cascade(fromRel, true, Year, n...) }
 func (t Time) EndByMonth(n ...int) Time    { return t.cascade(fromRel, true, Month, n...) }
@@ -207,7 +224,15 @@ func (t Time) EndByYearWeek(n ...int) Time { return t.cascade(fromRel, true, Yea
 
 // ---- 锚位（绝对）后偏移级联 ----
 
-func (t Time) StartAt(n ...int) Time         { return t.cascade(fromAt, false, Century, n...) }
+func (t Time) StartAt(n ...int) Time {
+	return t.cascade(fromAt, false, Year, append([]int{ABS}, n...)...)
+}
+
+func (t Time) EndAt(n ...int) Time {
+	return t.cascade(fromAt, true, Year, append([]int{ABS}, n...)...)
+}
+
+func (t Time) StartAtCentury(n ...int) Time  { return t.cascade(fromAt, false, Century, n...) }
 func (t Time) StartAtDecade(n ...int) Time   { return t.cascade(fromAt, false, Decade, n...) }
 func (t Time) StartAtYear(n ...int) Time     { return t.cascade(fromAt, false, Year, n...) }
 func (t Time) StartAtMonth(n ...int) Time    { return t.cascade(fromAt, false, Month, n...) }
@@ -223,7 +248,7 @@ func (t Time) StartAtWeek(n ...int) Time     { return t.cascade(fromAt, false, W
 func (t Time) StartAtWeekday(n ...int) Time  { return t.cascade(fromAt, false, Weekday, n...) }
 func (t Time) StartAtYearWeek(n ...int) Time { return t.cascade(fromAt, false, YearWeek, n...) }
 
-func (t Time) EndAt(n ...int) Time         { return t.cascade(fromAt, true, Century, n...) }
+func (t Time) EndAtCentury(n ...int) Time  { return t.cascade(fromAt, true, Century, n...) }
 func (t Time) EndAtDecade(n ...int) Time   { return t.cascade(fromAt, true, Decade, n...) }
 func (t Time) EndAtYear(n ...int) Time     { return t.cascade(fromAt, true, Year, n...) }
 func (t Time) EndAtMonth(n ...int) Time    { return t.cascade(fromAt, true, Month, n...) }
@@ -241,7 +266,15 @@ func (t Time) EndAtYearWeek(n ...int) Time { return t.cascade(fromAt, true, Year
 
 // ---- 偏移后锚位（绝对）级联 ----
 
-func (t Time) StartIn(n ...int) Time         { return t.cascade(fromIn, false, Century, n...) }
+func (t Time) StartIn(n ...int) Time {
+	return t.cascade(fromIn, false, Year, append([]int{ABS}, n...)...)
+}
+
+func (t Time) EndIn(n ...int) Time {
+	return t.cascade(fromIn, true, Year, append([]int{ABS}, n...)...)
+}
+
+func (t Time) StartInCentury(n ...int) Time  { return t.cascade(fromIn, false, Century, n...) }
 func (t Time) StartInDecade(n ...int) Time   { return t.cascade(fromIn, false, Decade, n...) }
 func (t Time) StartInYear(n ...int) Time     { return t.cascade(fromIn, false, Year, n...) }
 func (t Time) StartInMonth(n ...int) Time    { return t.cascade(fromIn, false, Month, n...) }
@@ -257,7 +290,7 @@ func (t Time) StartInWeek(n ...int) Time     { return t.cascade(fromIn, false, W
 func (t Time) StartInWeekday(n ...int) Time  { return t.cascade(fromIn, false, Weekday, n...) }
 func (t Time) StartInYearWeek(n ...int) Time { return t.cascade(fromIn, false, YearWeek, n...) }
 
-func (t Time) EndIn(n ...int) Time         { return t.cascade(fromIn, true, Century, n...) }
+func (t Time) EndInCentury(n ...int) Time  { return t.cascade(fromIn, true, Century, n...) }
 func (t Time) EndInDecade(n ...int) Time   { return t.cascade(fromIn, true, Decade, n...) }
 func (t Time) EndInYear(n ...int) Time     { return t.cascade(fromIn, true, Year, n...) }
 func (t Time) EndInMonth(n ...int) Time    { return t.cascade(fromIn, true, Month, n...) }
@@ -272,6 +305,24 @@ func (t Time) EndInQuarter(n ...int) Time  { return t.cascade(fromIn, true, Quar
 func (t Time) EndInWeek(n ...int) Time     { return t.cascade(fromIn, true, Week, n...) }
 func (t Time) EndInWeekday(n ...int) Time  { return t.cascade(fromIn, true, Weekday, n...) }
 func (t Time) EndInYearWeek(n ...int) Time { return t.cascade(fromIn, true, YearWeek, n...) }
+
+// --- Jump 系列的绝对年方法 ---
+
+func (t Time) Jump(n ...int) Time {
+	return t.cascade(fromJumpAbs, false, Year, append([]int{ABS}, n...)...)
+}
+
+func (t Time) JumpBy(n ...int) Time {
+	return t.cascade(fromJumpRel, false, Year, append([]int{ABS}, n...)...)
+}
+
+func (t Time) JumpAt(n ...int) Time {
+	return t.cascade(fromJumpAt, false, Year, append([]int{ABS}, n...)...)
+}
+
+func (t Time) JumpIn(n ...int) Time {
+	return t.cascade(fromJumpIn, false, Year, append([]int{ABS}, n...)...)
+}
 
 // --- Start 的保留精度版本 ---
 

@@ -10,9 +10,9 @@ func TestAbsSeriesDevilMatrix(t *testing.T) {
 	base := Parse("2024-04-15 14:30:45")
 
 	t.Run("核心纵向级联 (Century -> Second)", func(t *testing.T) {
-		// 1. 全链路定位: Start(0, 2, 5, 5, 20, 10, 30, 0)
+		// 1. 全链路定位: StartCentury(0, 2, 5, 5, 20, 10, 30, 0)
 		// 2000(C) -> 2020(D) -> 2025(Y) -> 5月(M) -> 20日(D) -> 10:30 -> 45s(Second=0保持)
-		assert(t, base.Start(0, 2, 5, 5, 20, 10, 30, 0), "2025-05-20 10:30:45", "全链路Start级联")
+		assert(t, base.StartCentury(0, 2, 5, 5, 20, 10, 30, 0), "2025-05-20 10:30:45", "全链路Start级联")
 
 		// 2. 深度End级联: EndYear(5, 6, 20, 15)
 		// 2025年(Y) -> 6月(M) -> 20日(D) -> 15时(H) -> 置满后续
@@ -20,24 +20,24 @@ func TestAbsSeriesDevilMatrix(t *testing.T) {
 	})
 
 	t.Run("边界对齐与扩张 (n=0 语义)", func(t *testing.T) {
-		// 1. Start 归零对齐
+		// 1. StartCentury 归零对齐
 		assert(t, base.StartYear(0), "2024-01-01 00:00:00", "StartYear(0) 归零")
 		assert(t, base.StartMonth(0), "2024-04-01 00:00:00", "StartMonth(0) 归零")
 		assert(t, base.StartDecade(1), "2010-01-01 00:00:00", "StartDecade(1) 锚定本世纪第1个年代")
 
-		// 2. End 置满扩张 (含 Decade/Century 修复验证)
+		// 2. EndCentury 置满扩张 (含 Decade/Century 修复验证)
 		assert(t, base.EndYear(0), "2024-12-31 23:59:59.999999999", "EndYear(0) 置满")
 		assert(t, base.EndDecade(0), "2029-12-31 23:59:59.999999999", "EndDecade(0) 扩张")
 		assert(t, base.EndDecade(1), "2019-12-31 23:59:59.999999999", "EndDecade(1) 锚定本世纪第1个年代末")
-		assert(t, base.End(0), "2099-12-31 23:59:59.999999999", "EndCentury(0) 扩张")
+		assert(t, base.EndCentury(0), "2099-12-31 23:59:59.999999999", "EndCentury(0) 扩张")
 		assert(t, base.EndQuarter(0), "2024-06-30 23:59:59.999999999", "EndQuarter(0) 扩张")
 	})
 
 	t.Run("日期保护与自然溢出", func(t *testing.T) {
 		// 1. 月份保护: 1月31日定位到2月 -> 2月29日 (2024闰年)
 		refJan31 := Parse("2024-01-31 12:00:00")
-		assert(t, refJan31.StartMonth(2), "2024-02-01 00:00:00", "月份保护(Start)")
-		assert(t, refJan31.EndMonth(2), "2024-02-29 23:59:59.999999999", "月份保护(End)")
+		assert(t, refJan31.StartMonth(2), "2024-02-01 00:00:00", "月份保护(StartCentury)")
+		assert(t, refJan31.EndMonth(2), "2024-02-29 23:59:59.999999999", "月份保护(EndCentury)")
 
 		// 2. 位移单位自然溢出: 4月31日 -> 5月1日
 		assert(t, base.StartDay(31), "2024-05-01 00:00:00", "Day自然溢出")
@@ -69,15 +69,15 @@ func TestAbsSeriesDevilMatrix(t *testing.T) {
 
 	t.Run("极端年份与安全边界", func(t *testing.T) {
 		// 1. 千年边界级联: Century(-1) -> y=2900 -> Decade(-1) -> y=2990 -> Year(-1) -> y=2999
-		assert(t, base.Start(-1, -1, -1, -1, -1), "2999-12-31 00:00:00", "千年边界")
+		assert(t, base.StartCentury(-1, -1, -1, -1, -1), "2999-12-31 00:00:00", "千年边界")
 
-		// 2. 安全性: Start(ISO) 无参数不崩溃
+		// 2. 安全性: StartCentury(ISO) 无参数不崩溃
 		defer func() {
 			if r := recover(); r != nil {
-				t.Errorf("Start(ISO) 崩溃: %v", r)
+				t.Errorf("StartCentury(ISO) 崩溃: %v", r)
 			}
 		}()
-		base.Start(ISO)
+		base.StartCentury(ISO)
 	})
 
 	t.Run("纳秒精度绝对定位 (Abs Nano)", func(t *testing.T) {

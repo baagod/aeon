@@ -27,12 +27,12 @@ func sequence(u Unit) []Unit {
 	return []Unit{u}
 }
 
-// applyAbs 应用基于上级单位的绝对定位逻辑，它是 Start() 系列方法的核心实现。
+// applyAbs 应用基于上级单位的绝对定位逻辑，它是 StartCentury() 系列方法的核心实现。
 //
 // 核心模式：
 //   - n > 0：定位到第 n 个单元（绝对位置）
 //   - n < 0：定位到倒数第 n 个单元
-//   - n = 0：保持当前单元位置不变，仅对其下的子级单位进行对齐（Start 系列归零，End 系列置满）。
+//   - n = 0：保持当前单元位置不变，仅对其下的子级单位进行对齐（StartCentury 系列归零，EndCentury 系列置满）。
 //
 // 定位规则：
 //
