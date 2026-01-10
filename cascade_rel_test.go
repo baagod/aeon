@@ -107,7 +107,7 @@ func TestBySeriesDevilMatrix(t *testing.T) {
 		assert(t, ref.StartByMilli(1), "2024-01-01 00:00:00.001", "StartByMilli(1)")
 
 		// 2. EndByMicro(1): +1us -> .000001. EndCentury(置满) -> .000001999 (Micro只管后面纳秒置满)
-		// Microsecond 对齐逻辑: ns = (ns/1e3)*1e3 + 999
+		// Micro 对齐逻辑: ns = (ns/1e3)*1e3 + 999
 		assert(t, ref.EndByMicro(1), "2024-01-01 00:00:00.000001999", "EndByMicro(1)")
 	})
 }

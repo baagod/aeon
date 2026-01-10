@@ -11,7 +11,7 @@ var (
 	yearWeekSeq = []Unit{YearWeek, Weekday, Hour, Minute, Second, Millisecond, Microsecond, Nanosecond}                 // 年周流
 )
 
-func sequence(u Unit) []Unit {
+func (u Unit) seq() []Unit {
 	switch u {
 	case Quarter:
 		return quarterSeq
@@ -25,6 +25,19 @@ func sequence(u Unit) []Unit {
 		}
 	}
 	return []Unit{u}
+}
+
+func (u Unit) factor() int {
+	switch u {
+	case Millisecond:
+		return 1e6
+	case Microsecond:
+		return 1e3
+	case Nanosecond:
+		return 1
+	default:
+		return 0
+	}
 }
 
 // applyAbs 应用基于上级单位的绝对定位逻辑，它是 StartCentury() 系列方法的核心实现。
@@ -41,7 +54,7 @@ func sequence(u Unit) []Unit {
 //	  （如 1月31日 跳转到 2月后校正为 28/29日），以保证内部状态 w (Weekday) 的合法性。
 //
 //	偏移单位（完全支持自然溢出）：
-//	- Day/Hour/Minute/Second/Millisecond/Microsecond/Nanosecond：作为细粒度偏移，不限制范围，允许产生跨月、跨天等自然时间溢出。
+//	- Day/Hour/Minute/Second/Milli/Micro/Nano：作为细粒度偏移，不限制范围，允许产生跨月、跨天等自然时间溢出。
 //	- Week：基于当前上下文日期，执行该日期所在周的周内定位。
 //
 // 参数级联：级联路径由入口方法决定。标准流为：世纪 → 年代 → 年 → 月 → 日 → 时 → 分 → 秒 → 毫秒 → 微秒 → 纳秒
@@ -144,25 +157,13 @@ func applyAbs(c Flag, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt tim
 		} else if n < 0 {
 			sec = 60 + n
 		}
-	case Millisecond:
-		if n > 0 {
-			ns = n * 1e6
+	case Millisecond, Microsecond, Nanosecond:
+		f := u.factor()
+		if pf := f * 1000; n > 0 {
+			ns = (ns/pf)*pf + n*f
 		} else if n < 0 {
-			ns = 1000*1e6 + n*1e6
+			ns = (ns/pf)*pf + pf + n*f
 		}
-	case Microsecond:
-		if n > 0 {
-			ns = (ns/1e6)*1e6 + n*1e3
-		} else if n < 0 {
-			ns = (ns/1e6)*1e6 + 1000*1e3 + n*1e3
-		}
-	case Nanosecond:
-		if n > 0 {
-			ns = (ns/1e3)*1e3 + n
-		} else if n < 0 {
-			ns = (ns/1e3)*1e3 + 1000*1e3 + n
-		}
-		// n = 0 时保留原始纳秒
 	case YearWeek:
 		// YearWeek: 遵循 “主权原则”，W01 是本年首个星期一。
 		// ISOWeek:  严格遵循 ISO 8601，锚点为 1月4日，强制周一起始。
@@ -254,12 +255,8 @@ func applyRel(c Flag, u, p Unit, n, y, m, d, h, mm, sec, ns int, w, startsAt tim
 		mm += n
 	case Second:
 		sec += n
-	case Millisecond:
-		ns += n * 1e6
-	case Microsecond:
-		ns += n * 1e3
-	case Nanosecond:
-		ns += n
+	case Millisecond, Microsecond, Nanosecond:
+		ns += n * u.factor()
 	case YearWeek:
 		d -= int(w-startsAt+7) % 7
 		d += n * 7
@@ -298,12 +295,8 @@ func applyOffset(c Flag, u, p Unit, n, y, m, d, h, mm, sec, ns int, w time.Weekd
 		mm += n
 	case Second:
 		sec += n
-	case Millisecond:
-		ns += n * 1e6
-	case Microsecond:
-		ns += n * 1e3
-	case Nanosecond:
-		ns += n
+	case Millisecond, Microsecond, Nanosecond:
+		ns += n * u.factor()
 	}
 
 	y, m, d, w = final(c, u, y, m, d)
@@ -351,12 +344,9 @@ func align(c Flag, last Unit, y, m, d, h, mm, sec, ns int) (int, int, int, int, 
 			sec, ns = 0, 0
 		case Second:
 			ns = 0
-		case Millisecond:
-			ns = (ns / 1e6) * 1e6 // 对齐到毫秒边界，纳秒归零
-		case Microsecond:
-			ns = (ns / 1e3) * 1e3 // 对齐到微秒边界，纳秒归零
-		case Nanosecond:
-			// 无操作，保留 ns
+		case Millisecond, Microsecond, Nanosecond:
+			f := last.factor()
+			ns = (ns / f) * f
 		}
 	} else {
 		switch last {
@@ -372,12 +362,9 @@ func align(c Flag, last Unit, y, m, d, h, mm, sec, ns int) (int, int, int, int, 
 			sec, ns = 59, 999999999
 		case Second:
 			ns = 999999999
-		case Millisecond:
-			ns = (ns/1e6)*1e6 + 999999 // 对齐到毫秒边界，纳秒置满
-		case Microsecond:
-			ns = (ns/1e3)*1e3 + 999 // 对齐到微秒边界，纳秒置满
-		case Nanosecond:
-			// 无操作，保留 ns
+		case Millisecond, Microsecond, Nanosecond:
+			f := last.factor()
+			ns = (ns/f)*f + (f - 1)
 		}
 	}
 

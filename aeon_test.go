@@ -29,6 +29,51 @@ func TestTime_Second(t *testing.T) {
 	}
 }
 
+func TestTime_SubSecond(t *testing.T) {
+	tm := time.Date(2023, 1, 1, 12, 30, 45, 123456789, time.UTC)
+	at := New(tm)
+
+	if at.Second(3) != 123 {
+		t.Errorf("Milli() = %d, want 123", at.Second(3))
+	}
+	if at.Second(6) != 123456 {
+		t.Errorf("Micro() = %d, want 123456", at.Second(6))
+	}
+	if at.Second(9) != 123456789 {
+		t.Errorf("Nano() = %d, want 123456789", at.Second(9))
+	}
+}
+
+func TestTime_SubSecondCascading(t *testing.T) {
+	base := Date(2024, 1, 1, 12, 0, 0, 0, time.UTC)
+
+	t.Run("Milli", func(t *testing.T) {
+		// StartMilli(500) -> 12:00:00.500
+		assert(t, base.StartMilli(500), "2024-01-01 12:00:00.5", "StartMilli(500)")
+		// EndMilli(500) -> 12:00:00.500999999
+		assert(t, base.EndMilli(500), "2024-01-01 12:00:00.500999999", "EndMilli(500)")
+	})
+
+	t.Run("Micro", func(t *testing.T) {
+		// StartMicro(500000) -> 12:00:00.500
+		assert(t, base.StartMicro(500000), "2024-01-01 12:00:00.5", "StartMicro(500000)")
+		// EndMicro(500000) -> 12:00:00.500000999
+		assert(t, base.EndMicro(500000), "2024-01-01 12:00:00.500000999", "EndMicro(500000)")
+	})
+
+	t.Run("Nano", func(t *testing.T) {
+		// StartNano(500000000) -> 12:00:00.500
+		assert(t, base.StartNano(500000000), "2024-01-01 12:00:00.5", "StartNano(500000000)")
+		// EndNano(500000000) -> 12:00:00.5
+		assert(t, base.EndNano(500000000), "2024-01-01 12:00:00.5", "EndNano(500000000)")
+	})
+
+	t.Run("Cross-unit Cascading", func(t *testing.T) {
+		// StartMilli(100, 500) -> 100ms + 500us = 100.5ms
+		assert(t, base.StartMilli(100, 500), "2024-01-01 12:00:00.1005", "StartMilli(100, 500)")
+	})
+}
+
 func TestTime_Unix(t *testing.T) {
 	// 2023-01-01 12:30:45.123456789 UTC
 	// Unix: 1672576245

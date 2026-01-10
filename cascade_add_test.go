@@ -53,7 +53,7 @@ func TestAdd(t *testing.T) {
 func TestAdd_Advanced(t *testing.T) {
 	// 1. 纳秒进位测试
 	// 2024-01-30 15:04:05.999999999 + 2ns -> 2024-01-30 15:04:06.000000001
-	t.Run("Nanosecond Rollover", func(t *testing.T) {
+	t.Run("Nano Rollover", func(t *testing.T) {
 		base := ParseByLayout("2006-01-02 15:04:05.000000000", "2024-01-30 15:04:05.999999999")
 		// 加 2 ns -> 应该进位到下一秒的 .000000001
 		next := base.AddNano(2)

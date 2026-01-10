@@ -71,7 +71,7 @@ Loop:
 	}
 
 	p := u
-	seq := sequence(u)
+	seq := u.seq()
 	w := t.Weekday()
 	sw := t.weekStartsAt
 
