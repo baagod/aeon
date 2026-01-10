@@ -1,4 +1,4 @@
-package thru
+package aeon
 
 import (
 	"testing"

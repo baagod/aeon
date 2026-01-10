@@ -1,4 +1,4 @@
-package thru
+package aeon
 
 import "time"
 
@@ -73,7 +73,7 @@ Loop:
 	p := u
 	seq := u.seq()
 	w := t.Weekday()
-	sw := t.weekStartsAt
+	sw := t.weekStarts
 
 	for i, n := range args {
 		if i >= len(seq) {
@@ -111,15 +111,15 @@ Loop:
 	}
 
 	return Time{
-		time:         time.Date(y, time.Month(m), d, h, mm, sec, ns, t.Location()),
-		weekStartsAt: t.weekStartsAt,
+		time:       time.Date(y, time.Month(m), d, h, mm, sec, ns, t.Location()),
+		weekStarts: t.weekStarts,
 	}
 }
 
 // --- 添加时间 ---
 
 func (t Time) Add(d time.Duration) Time {
-	return Time{time: t.time.Add(d), weekStartsAt: t.weekStartsAt}
+	return Time{time: t.time.Add(d), weekStarts: t.weekStarts}
 }
 
 func (t Time) AddCentury(n ...int) Time  { return t.cascade(fromOffset, false, Century, n...) }

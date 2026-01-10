@@ -1,4 +1,4 @@
-package thru
+package aeon
 
 import (
 	"math"
@@ -36,8 +36,8 @@ var (
 )
 
 type Time struct {
-	time         time.Time
-	weekStartsAt time.Weekday
+	time       time.Time
+	weekStarts time.Weekday
 }
 
 // --- 创建时间 ---
@@ -46,11 +46,11 @@ func New(t ...time.Time) Time {
 	if len(t) == 0 {
 		t = []time.Time{{}}
 	}
-	return Time{time: t[0], weekStartsAt: DefaultWeekStartsAt}
+	return Time{time: t[0], weekStarts: DefaultWeekStartsAt}
 }
 
 func Now() Time {
-	return Time{time: time.Now(), weekStartsAt: DefaultWeekStartsAt}
+	return Time{time: time.Now(), weekStarts: DefaultWeekStartsAt}
 }
 
 func Date[M ~int](
@@ -58,14 +58,14 @@ func Date[M ~int](
 	minute, sec, nsec int, loc *time.Location,
 ) Time {
 	return Time{
-		time:         time.Date(year, time.Month(month), day, hour, minute, sec, nsec, loc),
-		weekStartsAt: DefaultWeekStartsAt,
+		time:       time.Date(year, time.Month(month), day, hour, minute, sec, nsec, loc),
+		weekStarts: DefaultWeekStartsAt,
 	}
 }
 
 // WithWeekStartsAt 返回新实例，周起始日为 w。
 func (t Time) WithWeekStartsAt(w time.Weekday) Time {
-	return Time{time: t.time, weekStartsAt: w}
+	return Time{time: t.time, weekStarts: w}
 }
 
 // Unix 返回给定时间戳的时间。secs 可以是秒、毫秒、微妙或纳秒级时间戳。
@@ -181,17 +181,17 @@ func (t Time) Unix(n ...int) int64 {
 
 // UTC 返回 UTC 时间
 func (t Time) UTC() Time {
-	return Time{time: t.time.UTC(), weekStartsAt: t.weekStartsAt}
+	return Time{time: t.time.UTC(), weekStarts: t.weekStarts}
 }
 
 // Local 返回本地时间
 func (t Time) Local() Time {
-	return Time{time: t.time.Local(), weekStartsAt: t.weekStartsAt}
+	return Time{time: t.time.Local(), weekStarts: t.weekStarts}
 }
 
 // In 返回指定的 loc 时间
 func (t Time) In(loc *time.Location) Time {
-	return Time{time: t.time.In(loc), weekStartsAt: t.weekStartsAt}
+	return Time{time: t.time.In(loc), weekStarts: t.weekStarts}
 }
 
 // Round 返回距离当前时间最近的 "跃点"。
@@ -219,7 +219,7 @@ func (t Time) In(loc *time.Location) Time {
 //     时间 14:35:29.650 处在 14:30 (上一个跃点) 和 14:45 (下一个跃点) 之间，
 //     距离上一个跃点最近，故返回上一个跃点时间：14:30:00。
 func (t Time) Round(d time.Duration) Time {
-	return Time{time: t.time.Round(d), weekStartsAt: t.weekStartsAt}
+	return Time{time: t.time.Round(d), weekStarts: t.weekStarts}
 }
 
 // Truncate 返回最接近当前时间但不超过它的 "跃点"（向过去截断）。
@@ -255,7 +255,7 @@ func (t Time) Round(d time.Duration) Time {
 //
 //     返回上一个跃点：14:30:00.000（向过去）。
 func (t Time) Truncate(d time.Duration) Time {
-	return Time{time: t.time.Truncate(d), weekStartsAt: t.weekStartsAt}
+	return Time{time: t.time.Truncate(d), weekStarts: t.weekStarts}
 }
 
 // Time 返回 time.Time
