@@ -1,7 +1,6 @@
 package thru
 
 import (
-	"database/sql/driver"
 	"math"
 	"time"
 )
@@ -337,35 +336,6 @@ func Since(t Time) time.Duration {
 // Until 返回现在到 t 经过的持续时间
 func Until(t Time) time.Duration {
 	return time.Until(t.time)
-}
-
-// ---- 序列化时间 ----
-
-// Scan 由 DB 转到 Go 时调用
-func (t *Time) Scan(value any) error {
-	if v, ok := value.(time.Time); ok {
-		*t = New(v)
-	}
-	return nil
-}
-
-// Value 由 Go 转到 DB 时调用
-func (t Time) Value() (driver.Value, error) {
-	if t.IsZero() {
-		return nil, nil
-	}
-	return t.time, nil
-}
-
-// MarshalJSON 将 t 转为 JSON 字符串时调用
-func (t Time) MarshalJSON() ([]byte, error) {
-	return []byte(`"` + t.Format(DateTime) + `"`), nil
-}
-
-// UnmarshalJSON 将 JSON 字符串转为 t 时调用
-func (t *Time) UnmarshalJSON(b []byte) (err error) {
-	*t, err = ParseE(string(b))
-	return
 }
 
 // ---- 其他 ----

@@ -1,6 +1,7 @@
 package thru
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 )
@@ -124,5 +125,145 @@ func assert(t *testing.T, actual Time, expected string, msg string) {
 	t.Helper()
 	if actual.String() != expected {
 		t.Errorf("%s, got [%s], want [%s]", msg, actual, expected)
+	}
+}
+
+// ---- F 泛型测试 ----
+
+// 自定义格式类型
+type testDateFormat struct{}
+
+func (testDateFormat) Layout() string { return DateOnly }
+
+type testDateTimeFormat struct{}
+
+func (testDateTimeFormat) Layout() string { return DateTime }
+
+func TestFormatted_MarshalJSON(t *testing.T) {
+	tm := Date(2025, 1, 10, 14, 30, 45, 0, time.UTC)
+
+	tests := []struct {
+		name string
+		time any
+		want string
+	}{
+		{
+			name: "DateOnly格式",
+			time: F[testDateFormat]{Time: tm},
+			want: `"2025-01-10"`,
+		},
+		{
+			name: "DateTime格式",
+			time: F[testDateTimeFormat]{Time: tm},
+			want: `"2025-01-10 14:30:45"`,
+		},
+		{
+			name: "零值返回null",
+			time: F[testDateFormat]{},
+			want: `null`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := json.Marshal(tt.time)
+			if err != nil {
+				t.Fatalf("Marshal error: %v", err)
+			}
+			if string(got) != tt.want {
+				t.Errorf("got %s, want %s", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFormatted_UnmarshalJSON(t *testing.T) {
+	tests := []struct {
+		name   string
+		input  string
+		format any
+		want   string
+	}{
+		{
+			name:   "DateOnly格式",
+			input:  `"2025-01-10"`,
+			format: &F[testDateFormat]{},
+			want:   "2025-01-10 00:00:00",
+		},
+		{
+			name:   "DateTime格式",
+			input:  `"2025-01-10 14:30:45"`,
+			format: &F[testDateTimeFormat]{},
+			want:   "2025-01-10 14:30:45",
+		},
+		{
+			name:   "null值",
+			input:  `null`,
+			format: &F[testDateFormat]{},
+			want:   "0001-01-01 00:00:00",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := json.Unmarshal([]byte(tt.input), tt.format)
+			if err != nil {
+				t.Fatalf("Unmarshal error: %v", err)
+			}
+
+			var got string
+			switch v := tt.format.(type) {
+			case *F[testDateFormat]:
+				got = v.String()
+			case *F[testDateTimeFormat]:
+				got = v.String()
+			}
+
+			if got != tt.want {
+				t.Errorf("got %s, want %s", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFormatted_StructField(t *testing.T) {
+	type User struct {
+		Name      string                `json:"name"`
+		Birthday  F[testDateFormat]     `json:"birthday"`
+		CreatedAt F[testDateTimeFormat] `json:"created_at"`
+	}
+
+	user := User{
+		Name:      "张三",
+		Birthday:  F[testDateFormat]{Time: Date(1990, 5, 15, 0, 0, 0, 0, time.UTC)},
+		CreatedAt: F[testDateTimeFormat]{Time: Date(2025, 1, 10, 14, 30, 45, 0, time.UTC)},
+	}
+
+	// 序列化
+	data, err := json.Marshal(user)
+	if err != nil {
+		t.Fatalf("Marshal error: %v", err)
+	}
+
+	want := `{"name":"张三","birthday":"1990-05-15","created_at":"2025-01-10 14:30:45"}`
+	if string(data) != want {
+		t.Errorf("Marshal:\ngot  %s\nwant %s", data, want)
+	}
+
+	// 反序列化
+	var user2 User
+	err = json.Unmarshal(data, &user2)
+	if err != nil {
+		t.Fatalf("Unmarshal error: %v", err)
+	}
+
+	if user2.Name != user.Name {
+		t.Errorf("Name: got %s, want %s", user2.Name, user.Name)
+	}
+	if user2.Birthday.String() != user.Birthday.String() {
+		t.Errorf("Birthday: got %s, want %s", user2.Birthday, user.Birthday)
+	}
+	if user2.CreatedAt.String() != user.CreatedAt.String() {
+		t.Errorf("CreatedAt: got %s, want %s", user2.CreatedAt, user.CreatedAt)
 	}
 }
