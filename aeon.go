@@ -143,6 +143,16 @@ func (t Time) Weekday() time.Weekday {
 	return t.time.Weekday()
 }
 
+// ISOWeek 返回 ISO 年周
+func (t Time) ISOWeek() (year, week int) {
+	return t.time.ISOWeek()
+}
+
+// Zone 获取当前时区的名称和偏移量
+func (t Time) Zone() (name string, offset int) {
+	return t.time.Zone()
+}
+
 // YearDay 返回一年中的第几天，非闰年范围 [1,365]，闰年范围 [1,366]。
 func (t Time) YearDay() int {
 	return t.time.YearDay()

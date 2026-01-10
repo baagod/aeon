@@ -104,7 +104,7 @@ func TestBySeriesDevilMatrix(t *testing.T) {
 		ref := Parse("2024-01-01 00:00:00")
 
 		// 1. StartByMilli(1): +1ms -> .001. Start(归零) -> .001000000
-		assert(t, ref.StartByMilli(1), "2024-01-01 00:00:00.001000000", "StartByMilli(1)")
+		assert(t, ref.StartByMilli(1), "2024-01-01 00:00:00.001", "StartByMilli(1)")
 
 		// 2. EndByMicro(1): +1us -> .000001. End(置满) -> .000001999 (Micro只管后面纳秒置满)
 		// Microsecond 对齐逻辑: ns = (ns/1e3)*1e3 + 999
