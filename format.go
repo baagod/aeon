@@ -3,7 +3,6 @@ package thru
 import (
 	"database/sql/driver"
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -30,34 +29,27 @@ const (
 	TimeOnly    = "15:04:05"
 )
 
-const (
-	dateonly = `\d{4}(-\d{2}){2}`
-	datetime = `(\d{2}:){2}\d{2}(\.\d{1,9})?`
-	mst      = `[A-Z]{3,4}([+\-]\d{1,2})?`
-	z0700    = `[+\-]\d{4}`
-)
-
-var patterns = map[string]*regexp.Regexp{
-	"2006":                                re(`\d{4}`),
-	"15:04":                               re(`\d{2}:\d{2}`),
-	"3:04PM":                              re(`\d{1,2}:\d{2}[AP]M`),
-	"2006-01":                             re(`\d{4}-\d{2}`),
-	"15:04:05":                            re(datetime),
-	"2006-01-02":                          re(dateonly),
-	"2006-01-02 15":                       re(dateonly + ` \d{2}`),
-	"Jan _2 15:04:05":                     re(`(?i)[a-z]{3} \d{1,2} ` + datetime),
-	"2006-01-02 15:04":                    re(dateonly + ` \d{2}:\d{2}`),
-	"2006-01-02 15:04:05":                 re(dateonly + " " + datetime),
-	"02 Jan 06 15:04 MST":                 re(`\d{2} (?i)[a-z]{3} \d{2} \d{2}:\d{2} %s`, mst),
-	"02 Jan 06 15:04 -0700":               re(`\d{2} (?i)[a-z]{3} \d{2} \d{2}:\d{2} %s`, z0700),
-	"Mon Jan _2 15:04:05 2006":            re(`(?i)([a-z]{3} ){2}\d{1,2} %s \d{4}`, datetime),
-	"01-02 03:04:05PM '06 -0700":          re(`\d{2}-\d{2} %s[AP]M '\d{2} %s`, datetime, z0700),
-	"Mon Jan _2 15:04:05 MST 2006":        re(`(?i)([a-z]{3} ){2}\d{1,2} %s %s \d{4}`, datetime, mst),
-	"Mon, 02 Jan 2006 15:04:05 MST":       re(`(?i)[a-z]{3}, \d{2} (?i)[a-z]{3} \d{4} %s %s`, datetime, mst),
-	"Mon Jan 02 15:04:05 -0700 2006":      re(`(?i)([a-z]{3} ){2}\d{2} %s %s \d{4}`, z0700, datetime),
-	"Monday, 02-Jan-06 15:04:05 MST":      re(`(?i)(Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day, \d{2}-(?i)[a-z]{3}-\d{2} %s %s`, datetime, mst),
-	"Mon, 02 Jan 2006 15:04:05 -0700":     re(`(?i)[a-z]{3}, \d{2} (?i)[a-z]{3} \d{4} %s %s`, datetime, z0700),
-	"2006-01-02T15:04:05.999999999Z07:00": re(`%sT%s(Z|[+\-]\d{2}:\d{2})`, dateonly, datetime),
+var Formats = []string{
+	Layout,
+	ANSIC,
+	UnixDate,
+	RubyDate,
+	RFC822,
+	RFC822Z,
+	RFC850,
+	RFC1123,
+	RFC1123Z,
+	RFC3339,
+	RFC3339Nano,
+	Kitchen,
+	// Handy time stamps.
+	Stamp,
+	StampMilli,
+	StampMicro,
+	StampNano,
+	DateTime,
+	DateOnly,
+	TimeOnly,
 }
 
 // --- 格式化时间 ---
@@ -88,7 +80,7 @@ func (t *Time) Scan(value any) (err error) {
 	case string:
 		*t, err = ParseE(v, t.Location())
 	default:
-		*t = New(time.Time{})
+		*t = New()
 	}
 	return
 }
@@ -159,7 +151,7 @@ func (f *F[T]) Scan(value any) (err error) {
 	case string:
 		f.Time, err = ParseE(v, f.Location())
 	default:
-		f.Time = New(time.Time{})
+		f.Time = New()
 	}
 	return
 }
@@ -181,22 +173,18 @@ func ParseE(s string, loc ...*time.Location) (Time, error) {
 		return Time{}, nil
 	}
 
-	var layout string
-	s = strings.ReplaceAll(s, "/", "-")
+	l := time.Local
+	if len(loc) > 0 && loc[0] != nil {
+		l = loc[0]
+	}
 
-	for k, v := range patterns {
-		if v.MatchString(s) {
-			layout = k
-			break
+	for _, layout := range Formats {
+		if t, err := time.ParseInLocation(layout, s, l); err == nil {
+			return New(t), nil // 解析成功，立即返回
 		}
 	}
 
-	if loc == nil {
-		loc = append(loc, time.Local)
-	}
-
-	pt, err := time.ParseInLocation(layout, s, loc[0])
-	return Time{time: pt, weekStartsAt: DefaultWeekStartsAt}, err
+	return Time{}, fmt.Errorf("aeon 无法解析时间字符串: %q", s)
 }
 
 // Parse 返回忽略错误的 ParseE()
@@ -218,17 +206,17 @@ func ParseByLayout(layout string, value string, loc ...*time.Location) Time {
 	return t
 }
 
+func (t Time) Format(layout string) string {
+	return t.time.Format(layout)
+}
+
+func (t Time) AppendFormat(b []byte, layout string) []byte {
+	return t.time.AppendFormat(b, layout)
+}
+
 func (t Time) String() string {
 	if ns := t.time.Nanosecond(); ns == 0 {
 		return t.time.Format(DateTime)
 	}
 	return t.time.Format("2006-01-02 15:04:05.000000000")
-}
-
-func (t Time) Format(layout string) string {
-	return t.time.Format(layout)
-}
-
-func re(s string, a ...any) *regexp.Regexp {
-	return regexp.MustCompile("^" + fmt.Sprintf(s, a...) + "$")
 }

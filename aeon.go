@@ -42,8 +42,11 @@ type Time struct {
 
 // --- 创建时间 ---
 
-func New(t time.Time) Time {
-	return Time{time: t, weekStartsAt: DefaultWeekStartsAt}
+func New(t ...time.Time) Time {
+	if len(t) == 0 {
+		t = []time.Time{{}}
+	}
+	return Time{time: t[0], weekStartsAt: DefaultWeekStartsAt}
 }
 
 func Now() Time {
