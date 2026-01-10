@@ -66,7 +66,11 @@ Loop:
 		}
 	}
 
-	if args = args[z:]; len(args) == 0 {
+	if args = args[z:]; f == fromOffset {
+		args = append(args, 1)
+	}
+
+	if len(args) == 0 {
 		args = zeroArgs
 	}
 
