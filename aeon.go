@@ -28,6 +28,8 @@ const (
 var (
 	// DefaultWeekStartsAt 全局默认周起始日（默认为周一）
 	DefaultWeekStartsAt = time.Monday
+	// DefaultTimeZone Parse() 使用的默认时区
+	DefaultTimeZone = time.UTC
 	// pow10 预定义的 10 的幂次方表，用于高精度计算
 	pow10 = [...]int64{
 		1, 10, 100, 1000, 10000, 100000, 1e6, 1e7, 1e8, 1e9,
