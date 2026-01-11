@@ -85,3 +85,53 @@ func BenchmarkJSON_Carbon(b *testing.B) {
 		_, _ = json.Marshal(c)
 	}
 }
+
+// --- 5. 解析性能对决 ---
+
+func BenchmarkParse_Standard_Aeon(b *testing.B) {
+	s := "2025-01-10 12:00:00"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = ParseE(s)
+	}
+}
+
+func BenchmarkParse_Standard_Carbon(b *testing.B) {
+	s := "2025-01-10 12:00:00"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = carbon.Parse(s)
+	}
+}
+
+func BenchmarkParse_Slash_Aeon(b *testing.B) {
+	s := "2025/01/10 12:00:00"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = ParseE(s)
+	}
+}
+
+func BenchmarkParse_Slash_Carbon(b *testing.B) {
+	s := "2025/01/10 12:00:00"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = carbon.Parse(s)
+	}
+}
+
+func BenchmarkParse_Nano_Aeon(b *testing.B) {
+	s := "2025-01-10 12:00:00.123456789"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = ParseE(s)
+	}
+}
+
+func BenchmarkParse_Nano_Carbon(b *testing.B) {
+	s := "2025-01-10 12:00:00.123456789"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = carbon.Parse(s)
+	}
+}

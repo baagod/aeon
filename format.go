@@ -50,6 +50,7 @@ const (
 	// 紧凑与特殊格式
 	DTCompact     = "20060102150405"
 	DCompact      = "20060102"
+	TimeCompact   = "150405"
 	DTVeryShort   = "2006-1-2 15:4:5"
 	DTShort       = "2006-1-2 15:4"
 	DOnlyShort    = "2006-1-2"
@@ -81,15 +82,9 @@ const (
 	ISO8601Ns     = "2006-01-02T15:04:05.999999999-07:00"
 	ISO8601Zulu   = "2006-01-02T15:04:05Z"
 	ISO8601ZuluNs = "2006-01-02T15:04:05.999999999Z"
-
-	// 标准协议别名
-	Atom        = RFC3339
-	W3C         = RFC3339
-	RSS         = "Mon, 02 Jan 2006 15:04:05 -0700"
-	TimeCompact = "150405"
 )
 
-var Formats = []string{
+var formats = []string{
 	// 1. 核心级联 (得益于归一化与 .999 机制，三行即可覆盖 95% 场景)
 	DT, DTNs, DateOnly,
 
@@ -112,6 +107,45 @@ var Formats = []string{
 	DTVeryShort, DTShort, DOnlyShort, DHourShort, TimeOnly,
 	TimeVeryShort, TimeShort, TimeTZShort, TimeCompact,
 	DMonth, MonthD, YearOnly, HourOnly,
+}
+
+var (
+	buckets = map[int][]string{}
+	Formats []string // 公开给用户添加自定义格式
+)
+
+func init() {
+	for _, layout := range formats {
+		// 判定变长因子：
+		// 1. 纳秒系列 (.999)
+		// 2. 文本月份/星期 (Jan, Mon)
+		// 3. 时区 (MST)
+		// 4. 宽松数字格式 (不带前导零的 1, 2, 3, 4, 5, 15)
+		dynamic := strings.Contains(layout, ".999") ||
+			strings.Contains(layout, "Jan") ||
+			strings.Contains(layout, "Mon") ||
+			strings.Contains(layout, "MST") ||
+			strings.Contains(layout, "2006-1") ||
+			strings.Contains(layout, "15:4") ||
+			layout == "15" || layout == "1-2" || layout == "2006"
+
+		if dynamic {
+			Formats = append(Formats, layout)
+			if !strings.Contains(layout, ".999") {
+				buckets[len(layout)] = append(buckets[len(layout)], layout)
+				continue
+			}
+
+			dotIdx := strings.Index(layout, ".")
+			for i := dotIdx; i <= len(layout); i++ {
+				buckets[i] = append(buckets[i], layout)
+			}
+
+			continue
+		}
+
+		buckets[len(layout)] = append(buckets[len(layout)], layout)
+	}
 }
 
 // --- 格式化时间 ---
@@ -225,12 +259,6 @@ func (f F[T]) Value() (driver.Value, error) {
 	return f.Time.Time(), nil
 }
 
-type datetimeMilliFormat string
-
-func (datetimeMilliFormat) Layout() string { return DTMilli }
-
-type DateTimeMilli = F[datetimeMilliFormat]
-
 // --- 解析引擎 ---
 
 func ParseE(s string, loc ...*time.Location) (Time, error) {
@@ -239,8 +267,10 @@ func ParseE(s string, loc ...*time.Location) (Time, error) {
 		return Time{}, nil
 	}
 
+	// 1. 斜杠归一化
 	s = strings.ReplaceAll(s, "/", "-")
 
+	// 2. 分隔符与点号智能归一化
 	if idx := strings.IndexAny(s, " T"); idx != -1 {
 		s = strings.ReplaceAll(s[:idx], ".", "-") + " " + s[idx+1:]
 	} else if dotCount := strings.Count(s, "."); dotCount >= 2 {
@@ -257,6 +287,16 @@ func ParseE(s string, loc ...*time.Location) (Time, error) {
 		l = loc[0]
 	}
 
+	// 3. 精准分桶搜索 (O(1) 效率)
+	if list, ok := buckets[len(s)]; ok {
+		for _, layout := range list {
+			if t, err := time.ParseInLocation(layout, s, l); err == nil {
+				return Aeon(t), nil
+			}
+		}
+	}
+
+	// 4. 变长布局特快路径 (处理星期、月份名称等非固定长度布局)
 	for _, layout := range Formats {
 		if t, err := time.ParseInLocation(layout, s, l); err == nil {
 			return Aeon(t), nil
@@ -285,15 +325,10 @@ func ParseBy(layout string, value string, loc ...*time.Location) Time {
 	return t
 }
 
-// --- 格式化 API ---
+// --- 内置的格式化时间 ---
 
-func (t Time) Format(layout string) string                 { return t.time.Format(layout) }
-func (t Time) AppendFormat(b []byte, layout string) []byte { return t.time.AppendFormat(b, layout) }
-func (t Time) String() string                              { return t.time.Format(DTNs) }
+type formatDateTimeMilli string
 
-func (t Time) ToString(f ...string) string {
-	if len(f) > 0 {
-		return t.time.Format(f[0])
-	}
-	return t.time.Format(DTNs)
-}
+func (formatDateTimeMilli) Layout() string { return DTMilli }
+
+type DateTimeMilli = F[formatDateTimeMilli]

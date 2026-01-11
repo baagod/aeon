@@ -399,6 +399,19 @@ func (t Time) IsSame(u Unit, target Time) bool {
 	}
 }
 
+// --- 时间格式 ---
+
+func (t Time) Format(layout string) string                 { return t.time.Format(layout) }
+func (t Time) AppendFormat(b []byte, layout string) []byte { return t.time.AppendFormat(b, layout) }
+func (t Time) String() string                              { return t.time.Format(DTNs) }
+
+func (t Time) ToString(f ...string) string {
+	if len(f) > 0 {
+		return t.time.Format(f[0])
+	}
+	return t.time.Format(DTNs)
+}
+
 // --- Aeon 包方法 ---
 
 // Near 在集合 times 中寻找距离 base 最近或最远的时间点。
