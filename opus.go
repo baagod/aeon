@@ -40,6 +40,27 @@ func (u Unit) factor() int {
 	}
 }
 
+func apply(f from, c Flag, first bool, u, p Unit, n int, y, m, d, h, mm, s, ns int, w, sw time.Weekday) (int, int, int, int, int, int, int, time.Weekday) {
+	switch f {
+	case fromAdd:
+		return applyOffset(c, u, p, n, y, m, d, h, mm, s, ns, w)
+	case fromAbs, fromGoAbs:
+		return applyAbs(c, u, p, n, y, m, d, h, mm, s, ns, w, sw)
+	case fromRel, fromGoRel:
+		return applyRel(c, u, p, n, y, m, d, h, mm, s, ns, w, sw)
+	case fromAt, fromGoAt:
+		if first {
+			return applyAbs(c, u, p, n, y, m, d, h, mm, s, ns, w, sw)
+		}
+		return applyRel(c, u, p, n, y, m, d, h, mm, s, ns, w, sw)
+	default: // fromIn, fromGoIn
+		if first {
+			return applyRel(c, u, p, n, y, m, d, h, mm, s, ns, w, sw)
+		}
+		return applyAbs(c, u, p, n, y, m, d, h, mm, s, ns, w, sw)
+	}
+}
+
 // applyAbs 应用基于上级单位的绝对定位逻辑，它是 StartCentury() 系列方法的核心实现。
 //
 // 核心模式：

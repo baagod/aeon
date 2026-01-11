@@ -1,6 +1,9 @@
 package aeon
 
-import "time"
+import (
+	"math"
+	"time"
+)
 
 type from int
 
@@ -9,20 +12,20 @@ const (
 	fromRel             // Start/EndByCentury (全相对)
 	fromAt              // StartAt/EndCentury (定位后偏移: Abs + Rel..)
 	fromIn              // Start/EndInCentury (偏移后定位: Rel + Abs..)
+	fromAdd             // Add 全相对不对齐
 	fromGoAbs
 	fromGoRel
 	fromGoAt
 	fromGoIn
-	fromOffset // Add 全相对不对齐
 )
 
 const (
 	// ISO 标志位
-	ISO = -1000000
+	ISO = math.MinInt + 1000 + iota
 	// Overflow 允许月份溢出标志
-	Overflow = -2000000
+	Overflow
 	// ABS 绝对时间（仅对世纪、年份生效）标志
-	ABS = -3000000
+	ABS
 )
 
 // Flag 承载级联操作的上下文配置
@@ -42,80 +45,60 @@ type Flag struct {
 // Add 全相对不对齐
 func (t Time) cascade(f from, fill bool, u Unit, args ...int) Time {
 	y, m, d := t.Date()
-	h, mm, sec := t.Clock()
+	h, mm, s := t.Clock()
 	ns := t.time.Nanosecond()
+	w := t.Weekday()
+	sw := t.weekStarts
 
-	c := Flag{
-		fill:   fill,
-		goMode: f >= fromGoAbs && f <= fromGoIn,
-	}
+	p := u
+	c := Flag{fill: fill, goMode: f >= fromGoAbs}
 
-	// 标志位解析循环
-	var z int
-Loop:
-	for ; z < len(args); z++ {
-		switch args[z] {
-		case ISO:
-			c.iso = true
-		case Overflow:
-			c.overflow = true
-		case ABS:
-			c.abs = true
-		default:
-			break Loop
-		}
-	}
-
-	if args = args[z:]; len(args) == 0 {
-		if f == fromOffset {
+	if len(args) == 0 {
+		if f == fromAdd {
 			args = oneArgs
 		} else {
 			args = zeroArgs
 		}
 	}
 
-	p := u
-	seq := u.seq()
-	w := t.Weekday()
-	sw := t.weekStarts
-
-	for i, n := range args {
-		if i >= len(seq) {
-			break
-		}
-
-		unit := seq[i]
-
-		switch f {
-		case fromOffset:
-			y, m, d, h, mm, sec, ns, w = applyOffset(c, unit, p, n, y, m, d, h, mm, sec, ns, w)
-		case fromAbs, fromGoAbs:
-			y, m, d, h, mm, sec, ns, w = applyAbs(c, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
-		case fromRel, fromGoRel:
-			y, m, d, h, mm, sec, ns, w = applyRel(c, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
-		case fromAt, fromGoAt:
-			if i == 0 {
-				y, m, d, h, mm, sec, ns, w = applyAbs(c, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
-			} else {
-				y, m, d, h, mm, sec, ns, w = applyRel(c, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
-			}
-		case fromIn, fromGoIn:
-			if i == 0 {
-				y, m, d, h, mm, sec, ns, w = applyRel(c, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
-			} else {
-				y, m, d, h, mm, sec, ns, w = applyAbs(c, unit, p, n, y, m, d, h, mm, sec, ns, w, sw)
+	if len(args) == 1 && args[0] > ISO {
+		y, m, d, h, mm, s, ns, w = apply(f, c, true, u, u, args[0], y, m, d, h, mm, s, ns, w, sw)
+	} else {
+		var z int
+	Loop:
+		for ; z < len(args); z++ { // 标志位解析循环
+			switch args[z] {
+			case ISO:
+				c.iso = true
+			case Overflow:
+				c.overflow = true
+			case ABS:
+				c.abs = true
+			default:
+				break Loop
 			}
 		}
 
-		p = unit
+		args = args[z:]
+		seq := u.seq()
+
+		if l := len(seq); len(args) > l {
+			args = args[:l]
+		}
+
+		for i, n := range args {
+			unit := seq[i]
+			y, m, d, h, mm, s, ns, w = apply(f, c, i == 0, unit, p, n, y, m, d, h, mm, s, ns, w, sw)
+			p = unit
+		}
 	}
 
-	if !c.goMode && f != fromOffset {
-		y, m, d, h, mm, sec, ns = align(c, p, y, m, d, h, mm, sec, ns)
+	if !c.goMode && f != fromAdd {
+		y, m, d, h, mm, s, ns = align(c, p, y, m, d, h, mm, s, ns)
 	}
 
 	return Time{
-		time:       time.Date(y, time.Month(m), d, h, mm, sec, ns, t.Location()),
+		time:       time.Date(y, time.Month(m), d, h, mm, s, ns, t.Location()),
 		weekStarts: t.weekStarts,
 	}
 }
@@ -126,21 +109,21 @@ func (t Time) Add(d time.Duration) Time {
 	return Time{time: t.time.Add(d), weekStarts: t.weekStarts}
 }
 
-func (t Time) AddCentury(n ...int) Time  { return t.cascade(fromOffset, false, Century, n...) }
-func (t Time) AddDecade(n ...int) Time   { return t.cascade(fromOffset, false, Decade, n...) }
-func (t Time) AddYear(n ...int) Time     { return t.cascade(fromOffset, false, Year, n...) }
-func (t Time) AddMonth(n ...int) Time    { return t.cascade(fromOffset, false, Month, n...) }
-func (t Time) AddDay(n ...int) Time      { return t.cascade(fromOffset, false, Day, n...) }
-func (t Time) AddHour(n ...int) Time     { return t.cascade(fromOffset, false, Hour, n...) }
-func (t Time) AddMinute(n ...int) Time   { return t.cascade(fromOffset, false, Minute, n...) }
-func (t Time) AddSecond(n ...int) Time   { return t.cascade(fromOffset, false, Second, n...) }
-func (t Time) AddMilli(n ...int) Time    { return t.cascade(fromOffset, false, Millisecond, n...) }
-func (t Time) AddMicro(n ...int) Time    { return t.cascade(fromOffset, false, Microsecond, n...) }
-func (t Time) AddNano(n ...int) Time     { return t.cascade(fromOffset, false, Nanosecond, n...) }
-func (t Time) AddQuarter(n ...int) Time  { return t.cascade(fromOffset, false, Quarter, n...) }
-func (t Time) AddWeek(n ...int) Time     { return t.cascade(fromOffset, false, Week, n...) }
-func (t Time) AddWeekday(n ...int) Time  { return t.cascade(fromOffset, false, Weekday, n...) }
-func (t Time) AddYearWeek(n ...int) Time { return t.cascade(fromOffset, false, YearWeek, n...) }
+func (t Time) AddCentury(n ...int) Time  { return t.cascade(fromAdd, false, Century, n...) }
+func (t Time) AddDecade(n ...int) Time   { return t.cascade(fromAdd, false, Decade, n...) }
+func (t Time) AddYear(n ...int) Time     { return t.cascade(fromAdd, false, Year, n...) }
+func (t Time) AddMonth(n ...int) Time    { return t.cascade(fromAdd, false, Month, n...) }
+func (t Time) AddDay(n ...int) Time      { return t.cascade(fromAdd, false, Day, n...) }
+func (t Time) AddHour(n ...int) Time     { return t.cascade(fromAdd, false, Hour, n...) }
+func (t Time) AddMinute(n ...int) Time   { return t.cascade(fromAdd, false, Minute, n...) }
+func (t Time) AddSecond(n ...int) Time   { return t.cascade(fromAdd, false, Second, n...) }
+func (t Time) AddMilli(n ...int) Time    { return t.cascade(fromAdd, false, Millisecond, n...) }
+func (t Time) AddMicro(n ...int) Time    { return t.cascade(fromAdd, false, Microsecond, n...) }
+func (t Time) AddNano(n ...int) Time     { return t.cascade(fromAdd, false, Nanosecond, n...) }
+func (t Time) AddQuarter(n ...int) Time  { return t.cascade(fromAdd, false, Quarter, n...) }
+func (t Time) AddWeek(n ...int) Time     { return t.cascade(fromAdd, false, Week, n...) }
+func (t Time) AddWeekday(n ...int) Time  { return t.cascade(fromAdd, false, Weekday, n...) }
+func (t Time) AddYearWeek(n ...int) Time { return t.cascade(fromAdd, false, YearWeek, n...) }
 
 // --- 全绝对定位级联 ---
 
