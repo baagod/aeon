@@ -3,10 +3,19 @@ package aeon
 import (
 	"fmt"
 	"testing"
+	"time"
+
+	_ "github.com/dromara/carbon/v2"
+	_ "github.com/jinzhu/now"
 )
 
 func TestExample(_ *testing.T) {
-	t := Parse("2020-08-05 13:14:15.999999999")
+	// t := Parse("20200805131415.999999999")
+	//
+	// fmt.Println(t)
+	//
 
-	fmt.Println(t.AddDay())
+	Aeon(time.Now())
+	t := Unix(-1, true)
+	fmt.Println(t.ToString(DateTimeFull)) // 1969-12-31 23:59:59 +0000 UTC
 }

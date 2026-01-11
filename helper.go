@@ -4,6 +4,7 @@ import "time"
 
 var (
 	zeroArgs = []int{0}
+	oneArgs  = []int{1}
 	// maxDays 每个月的最大天数
 	maxDays = [13]int{1, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
 )
@@ -12,8 +13,8 @@ const (
 	absoluteYears = 292277022400
 )
 
-// IsLeap 返回 year 是否闰年
-func IsLeap[T ~int](year T) bool {
+// IsLeapYear 返回 year 是否闰年
+func IsLeapYear[T ~int](year T) bool {
 	return year%4 == 0 && (year%100 != 0 || year%400 == 0)
 }
 
@@ -25,13 +26,13 @@ func IsLeap[T ~int](year T) bool {
 //   - 平年 2 月有 28 天，闰年 29 天。
 func DaysIn[T ~int](y T, m ...T) int {
 	if len(m) > 0 {
-		if m[0] == 2 && IsLeap(y) {
+		if m[0] == 2 && IsLeapYear(y) {
 			return 29
 		}
 		return maxDays[m[0]]
 	}
 
-	if IsLeap(y) {
+	if IsLeapYear(y) {
 		return 366
 	}
 

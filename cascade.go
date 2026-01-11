@@ -66,12 +66,12 @@ Loop:
 		}
 	}
 
-	if args = args[z:]; f == fromOffset {
-		args = append(args, 1)
-	}
-
-	if len(args) == 0 {
-		args = zeroArgs
+	if args = args[z:]; len(args) == 0 {
+		if f == fromOffset {
+			args = oneArgs
+		} else {
+			args = zeroArgs
+		}
 	}
 
 	p := u

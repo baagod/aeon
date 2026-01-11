@@ -26,10 +26,10 @@ const (
 )
 
 var (
-	// DefaultWeekStartsAt 全局默认周起始日（默认为周一）
-	DefaultWeekStartsAt = time.Monday
+	// DefaultWeekStarts 全局默认周起始日（默认为周一）
+	DefaultWeekStarts = time.Monday
 	// DefaultTimeZone Parse() 使用的默认时区
-	DefaultTimeZone = time.UTC
+	DefaultTimeZone = time.Local
 	// pow10 预定义的 10 的幂次方表，用于高精度计算
 	pow10 = [...]int64{
 		1, 10, 100, 1000, 10000, 100000, 1e6, 1e7, 1e8, 1e9,
@@ -44,76 +44,105 @@ type Time struct {
 
 // --- 创建时间 ---
 
-func New(t ...time.Time) Time {
+func Aeon(t ...time.Time) Time {
 	if len(t) == 0 {
 		t = []time.Time{{}}
 	}
-	return Time{time: t[0], weekStarts: DefaultWeekStartsAt}
+	return Time{time: t[0], weekStarts: DefaultWeekStarts}
 }
 
-func Now() Time {
-	return Time{time: time.Now(), weekStarts: DefaultWeekStartsAt}
+func Now(loc ...*time.Location) Time {
+	l := DefaultTimeZone
+	if len(loc) > 0 && loc[0] != nil {
+		l = loc[0]
+	}
+	return Time{time: time.Now().In(l), weekStarts: DefaultWeekStarts}
 }
 
-func Date[M ~int](
-	year int, month M, day, hour,
-	minute, sec, nsec int, loc *time.Location,
-) Time {
+func New(y, m, d, h, mm, s int, others ...any) Time {
+	loc, ns := DefaultTimeZone, 0
+
+	for _, arg := range others {
+		switch v := arg.(type) {
+		case time.Duration:
+			ns = int(v.Nanoseconds())
+		case *time.Location:
+			loc = v
+		}
+	}
+
 	return Time{
-		time:       time.Date(year, time.Month(month), day, hour, minute, sec, nsec, loc),
-		weekStarts: DefaultWeekStartsAt,
+		time:       time.Date(y, time.Month(m), d, h, mm, s, ns, loc),
+		weekStarts: DefaultWeekStarts,
 	}
 }
 
-// WithWeekStartsAt 返回新实例，周起始日为 w。
-func (t Time) WithWeekStartsAt(w time.Weekday) Time {
+func NewDate(y, m, d int, others ...any) Time {
+	return New(y, m, d, 0, 0, 0, others...)
+}
+
+func NewHour(y, m, d, h int, others ...any) Time {
+	return New(y, m, d, h, 0, 0, others...)
+}
+
+func NewMinute(y, m, d, h, mm int, others ...any) Time {
+	return New(y, m, d, h, mm, 0, others...)
+}
+
+// WithWeekStarts 返回新实例，周起始日为 w。
+func (t Time) WithWeekStarts(w time.Weekday) Time {
 	return Time{time: t.time, weekStarts: w}
 }
 
 // Unix 返回给定时间戳的时间。secs 可以是秒、毫秒、微妙或纳秒级时间戳。
-func Unix(secs int64) Time {
-	v := secs
+func Unix(secs int64, utc ...bool) Time {
+	v, t := secs, time.Time{}
 	if secs < 0 { // 处理公元前时间戳
 		v = -secs
 	}
 
 	switch {
 	case v <= 9999999999: // 10位：秒
-		return New(time.Unix(secs, 0))
+		t = time.Unix(secs, 0)
 	case v <= 9999999999999: // 13位：毫秒
-		return New(time.UnixMilli(secs))
+		t = time.UnixMilli(secs)
 	case v <= 9999999999999999: // 16位：微秒
-		return New(time.UnixMicro(secs))
+		t = time.UnixMicro(secs)
 	default: // 19位及以上：纳秒
-		return New(time.Unix(0, secs))
+		t = time.Unix(0, secs)
 	}
+
+	if len(utc) > 0 && utc[0] {
+		t = t.UTC()
+	}
+
+	return Aeon(t)
 }
 
 // --- 获取时间 ---
 
-// Year 返回本年
-func (t Time) Year() int {
-	return t.time.Year()
+func (t Time) Year() int                 { return t.time.Year() }
+func (t Time) Month() int                { return int(t.time.Month()) }
+func (t Time) Day() int                  { return t.time.Day() }
+func (t Time) Hour() int                 { return t.time.Hour() }
+func (t Time) Minute() int               { return t.time.Minute() }
+func (t Time) Clock() (h, mm, s int)     { return t.time.Clock() }
+func (t Time) Days() int                 { return DaysIn(t.Year(), t.Month()) }
+func (t Time) Weekday() time.Weekday     { return t.time.Weekday() }
+func (t Time) ISOWeek() (year, week int) { return t.time.ISOWeek() }
+
+// YearDay 返回一年中的第几天，非闰年范围 [1,365]，闰年范围 [1,366]。
+func (t Time) YearDay() int {
+	return t.time.YearDay()
 }
 
-// Month 返回本月
-func (t Time) Month() int {
-	return int(t.time.Month())
-}
+// YearDays 返回本年总天数
+func (t Time) YearDays() int { return DaysIn(t.Year()) }
 
-// Day 返回本月的第几天
-func (t Time) Day() int {
-	return t.time.Day()
-}
-
-// Hour 返回小时，范围 [0, 23]
-func (t Time) Hour() int {
-	return t.time.Hour()
-}
-
-// Minute 返回分钟，范围 [0, 59]
-func (t Time) Minute() int {
-	return t.time.Minute()
+// Date 返回 t 的年月日
+func (t Time) Date() (int, int, int) {
+	y, m, d := t.time.Date()
+	return y, int(m), d
 }
 
 // Second 返回时间的秒数或指定纳秒精度的小数部分
@@ -127,42 +156,6 @@ func (t Time) Second(n ...int) int {
 	}
 	divisor := pow10[9-clamp(n[0], 1, 9)]
 	return t.time.Nanosecond() / int(divisor)
-}
-
-// Date 返回 t 的年月日
-func (t Time) Date() (int, int, int) {
-	y, m, d := t.time.Date()
-	return y, int(m), d
-}
-
-// Clock 返回一天中的小时、分钟和秒
-func (t Time) Clock() (hour, minute, sec int) {
-	return t.time.Clock()
-}
-
-// Weekday 返回星期几
-func (t Time) Weekday() time.Weekday {
-	return t.time.Weekday()
-}
-
-// ISOWeek 返回 ISO 年周
-func (t Time) ISOWeek() (year, week int) {
-	return t.time.ISOWeek()
-}
-
-// YearDay 返回一年中的第几天，非闰年范围 [1,365]，闰年范围 [1,366]。
-func (t Time) YearDay() int {
-	return t.time.YearDay()
-}
-
-// Days 返回本年总天数
-func (t Time) Days() int {
-	return DaysIn(t.Year())
-}
-
-// MonthDays 返回本月总天数
-func (t Time) MonthDays() int {
-	return DaysIn(t.Year(), t.Month())
 }
 
 // Unix 返回时间戳，可选择指定精度。
@@ -288,8 +281,8 @@ func (t Time) Diff(u Time, unit string, abs ...bool) float64 {
 	case "y":
 		// 年差 = 整数年差 + t 的年内进度 - u 的年内进度
 		years := float64(t.Year() - u.Year())
-		tDays := float64(t.YearDay()) / float64(t.Days()) // t 在本年的进度 (0~1)
-		uDays := float64(u.YearDay()) / float64(u.Days()) // u 在本年的进度 (0~1)
+		tDays := float64(t.YearDay()) / float64(t.YearDays()) // t 在本年的进度 (0~1)
+		uDays := float64(u.YearDay()) / float64(u.YearDays()) // u 在本年的进度 (0~1)
 		diff = years + tDays - uDays
 	case "M":
 		// 月差 = 整数月差 + 天数偏移比例
@@ -300,7 +293,7 @@ func (t Time) Diff(u Time, unit string, abs ...bool) float64 {
 		if days < 0 {
 			months-- // 天数不足一月，月差减 1
 		}
-		diff = months + days/float64(u.MonthDays())
+		diff = months + days/float64(u.Days())
 	case "d":
 		diff = t.Sub(u).Hours() / 24
 	case "h":

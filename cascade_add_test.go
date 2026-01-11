@@ -8,7 +8,7 @@ import (
 func TestAdd(t *testing.T) {
 	// 基准时间: 2024-01-30 15:04:05 (闰年)
 	baseTime := time.Date(2024, 1, 30, 15, 4, 5, 0, time.Local)
-	base := New(baseTime)
+	base := Aeon(baseTime)
 
 	// 1. 基础年/月/日 (正负测试)
 	assert(t, base.AddYear(1), "2025-01-30 15:04:05", "AddYear(1)")
@@ -69,7 +69,7 @@ func TestAdd_Advanced(t *testing.T) {
 
 		// 2024-03-10 02:00:00 DST 开始，时间向前跳 1 小时 (02:00 -> 03:00)
 		// 设定基准：2024-03-09 10:00:00 (PST)
-		base := Date(2024, 3, 9, 10, 0, 0, 0, loc)
+		base := NewHour(2024, 3, 9, 10, loc)
 
 		// AddDay(1) -> 应该是 2024-03-10 10:00:00 (PDT)
 		// 尽管实际上只过了 23 小时，但墙上时间保持 10:00

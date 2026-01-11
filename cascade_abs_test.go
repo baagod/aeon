@@ -60,11 +60,11 @@ func TestAbsSeriesDevilMatrix(t *testing.T) {
 		assert(t, refISO.StartYearWeek(ISO, 1, 2), "2025-12-30 00:00:00", "ISO W01 周二级联")
 
 		// 2. 主权周 (Sovereignty): 2026 第一个周一 (1/5)
-		assert(t, refISO.WithWeekStartsAt(time.Monday).StartYearWeek(1), "2026-01-05 00:00:00", "主权周W01")
+		assert(t, refISO.WithWeekStarts(time.Monday).StartYearWeek(1), "2026-01-05 00:00:00", "主权周W01")
 
 		// 3. Weekday 绝对定位
-		assert(t, base.WithWeekStartsAt(time.Monday).StartWeekday(1), "2024-04-15 00:00:00", "Weekday 1(Mon)")
-		assert(t, base.WithWeekStartsAt(time.Monday).StartWeekday(7), "2024-04-21 00:00:00", "Weekday 7(Sun)")
+		assert(t, base.WithWeekStarts(time.Monday).StartWeekday(1), "2024-04-15 00:00:00", "Weekday 1(Mon)")
+		assert(t, base.WithWeekStarts(time.Monday).StartWeekday(7), "2024-04-21 00:00:00", "Weekday 7(Sun)")
 	})
 
 	t.Run("极端年份与安全边界", func(t *testing.T) {

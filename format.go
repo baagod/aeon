@@ -126,11 +126,11 @@ func (t *Time) UnmarshalText(data []byte) error {
 func (t *Time) Scan(value any) (err error) {
 	switch v := value.(type) {
 	case time.Time:
-		*t = New(v)
+		*t = Aeon(v)
 	case string:
 		*t, err = ParseE(v, t.Location())
 	default:
-		*t = New()
+		*t = Aeon()
 	}
 	return
 }
@@ -190,11 +190,11 @@ func (f *F[T]) UnmarshalText(data []byte) error {
 func (f *F[T]) Scan(value any) (err error) {
 	switch v := value.(type) {
 	case time.Time:
-		f.Time = New(v)
+		f.Time = Aeon(v)
 	case string:
 		f.Time, err = ParseE(v, f.Location())
 	default:
-		f.Time = New()
+		f.Time = Aeon()
 	}
 	return
 }
@@ -244,7 +244,7 @@ func ParseE(s string, loc ...*time.Location) (Time, error) {
 
 	for _, layout := range Formats {
 		if t, err := time.ParseInLocation(layout, s, l); err == nil {
-			return New(t), nil
+			return Aeon(t), nil
 		}
 	}
 
@@ -262,7 +262,7 @@ func ParseByE(layout string, value string, loc ...*time.Location) (Time, error) 
 		l = loc[0]
 	}
 	pt, err := time.ParseInLocation(layout, value, l)
-	return Time{time: pt, weekStarts: DefaultWeekStartsAt}, err
+	return Time{time: pt, weekStarts: DefaultWeekStarts}, err
 }
 
 func ParseBy(layout string, value string, loc ...*time.Location) Time {
