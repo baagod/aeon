@@ -18,5 +18,5 @@ func TestExample(_ *testing.T) {
 	carbon.NewCarbon().IsLongYear()
 	Aeon(time.Now())
 	t := Unix(-1, true)
-	fmt.Println(t.ToString(DateTimeFull)) // 1969-12-31 23:59:59 +0000 UTC
+	fmt.Println(t.ToString(DTFull)) // 1969-12-31 23:59:59 +0000 UTC
 }

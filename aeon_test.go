@@ -6,41 +6,18 @@ import (
 	"time"
 )
 
-func TestTime_Second(t *testing.T) {
-	tm := time.Date(2023, 1, 1, 12, 30, 45, 123456789, time.UTC)
-	at := Aeon(tm)
-
-	tests := []struct {
-		n    int
-		want int
-	}{
-		{0, 45}, // 默认秒
-		{1, 1},  // 1.2... -> 1
-		{3, 123},
-		{6, 123456},
-		{9, 123456789},
-	}
-
-	for _, tt := range tests {
-		got := at.Second(tt.n)
-		if got != tt.want {
-			t.Errorf("Second(%d) = %d, want %d", tt.n, got, tt.want)
-		}
-	}
-}
-
 func TestTime_SubSecond(t *testing.T) {
 	tm := time.Date(2023, 1, 1, 12, 30, 45, 123456789, time.UTC)
 	at := Aeon(tm)
 
-	if at.Second(3) != 123 {
-		t.Errorf("Milli() = %d, want 123", at.Second(3))
+	if at.Milli() != 123 {
+		t.Errorf("Milli() = %d, want 123", at.Milli())
 	}
-	if at.Second(6) != 123456 {
-		t.Errorf("Micro() = %d, want 123456", at.Second(6))
+	if at.Micro() != 123456 {
+		t.Errorf("Micro() = %d, want 123456", at.Micro())
 	}
-	if at.Second(9) != 123456789 {
-		t.Errorf("Nano() = %d, want 123456789", at.Second(9))
+	if at.Nano() != 123456789 {
+		t.Errorf("Nano() = %d, want 123456789", at.Nano())
 	}
 }
 
@@ -182,7 +159,7 @@ func (testDateFormat) Layout() string { return DateOnly }
 
 type testDateTimeFormat struct{}
 
-func (testDateTimeFormat) Layout() string { return DateTime }
+func (testDateTimeFormat) Layout() string { return DT }
 
 func TestFormatted_MarshalJSON(t *testing.T) {
 	tm := New(2025, 1, 10, 14, 30, 45, 0, time.UTC)
@@ -311,4 +288,84 @@ func TestFormatted_StructField(t *testing.T) {
 	if user2.CreatedAt.String() != user.CreatedAt.String() {
 		t.Errorf("CreatedAt: got %s, want %s", user2.CreatedAt, user.CreatedAt)
 	}
+}
+
+func TestTime_SemanticChecks(t *testing.T) {
+	tm := New(2020, 8, 5, 13, 14, 15) // PM
+
+	t.Run("AM/PM", func(t *testing.T) {
+		if tm.IsAM() {
+			t.Error("Should be PM")
+		}
+		am := New(2020, 8, 5, 10, 0, 0)
+		if !am.IsAM() {
+			t.Error("Should be AM")
+		}
+	})
+
+	t.Run("Weekend", func(t *testing.T) {
+		sat := NewDate(2024, 1, 13) // Saturday
+		if !sat.IsWeekend() {
+			t.Error("2024-01-13 should be weekend")
+		}
+	})
+
+	t.Run("Leap/LongYear", func(t *testing.T) {
+		if !IsLeapYear(2020) {
+			t.Error("2020 is leap")
+		}
+		if !IsLongYear(2020) {
+			t.Error("2020 is long (ISO 53 weeks)")
+		}
+		if IsLongYear(2021) {
+			t.Error("2021 is not long")
+		}
+	})
+}
+
+func TestTime_Between(t *testing.T) {
+	start := NewDate(2024, 1, 1)
+	end := NewDate(2024, 1, 10)
+	mid := NewDate(2024, 1, 5)
+
+	if !mid.Between(start, end, "=") {
+		t.Error("Mid should be between with =")
+	}
+	if !start.Between(start, end, "=") {
+		t.Error("Start should be between with =")
+	}
+	if start.Between(start, end, "!") {
+		t.Error("Start should NOT be between with !")
+	}
+	if !start.Between(start, end, "[") {
+		t.Error("Start should be between with [")
+	}
+	if end.Between(start, end, "[") {
+		t.Error("End should NOT be between with [")
+	}
+}
+
+func TestTime_ExtremesAndNear(t *testing.T) {
+	t1 := NewDate(2020, 1, 1)
+	t2 := NewDate(2021, 1, 1)
+	t3 := NewDate(2022, 1, 1)
+
+	t.Run("Maxmin", func(t *testing.T) {
+		if !Maxmin(">", t1, t2, t3).Eq(t3) {
+			t.Error("Max should be t3")
+		}
+		if !Maxmin("<", t1, t2, t3).Eq(t1) {
+			t.Error("Min should be t1")
+		}
+	})
+
+	t.Run("Near", func(t *testing.T) {
+		base := NewDate(2021, 6, 1)
+		if !Near("<", base, t1, t2, t3).Eq(t2) {
+			t.Error("Closest to mid-2021 should be t2")
+		}
+		if !Near(">", base, t1, t2, t3).Eq(t1) {
+			t.Error("Farthest from mid-2021 should be t1")
+		}
+	})
 }

@@ -145,18 +145,17 @@ func (t Time) Date() (int, int, int) {
 	return y, int(m), d
 }
 
-// Second 返回时间的秒数或指定纳秒精度的小数部分
-//
-// 参数 n (可选) 指定返回的精度：
-//   - 不提供或 0: 返回整秒数 (0-59)
-//   - 1-9: 返回纳秒精度的小数部分，n 表示小数位数。
-func (t Time) Second(n ...int) int {
-	if len(n) == 0 || n[0] == 0 {
-		return t.time.Second()
-	}
-	divisor := pow10[9-clamp(n[0], 1, 9)]
-	return t.time.Nanosecond() / int(divisor)
-}
+// Second 返回时间的秒数 (0-59)
+func (t Time) Second() int { return t.time.Second() }
+
+// Milli 返回毫秒数 (0-999)
+func (t Time) Milli() int { return t.time.Nanosecond() / 1e6 }
+
+// Micro 返回微秒数 (0-999999)
+func (t Time) Micro() int { return t.time.Nanosecond() / 1e3 }
+
+// Nano 返回纳秒数 (0-999999999)
+func (t Time) Nano() int { return t.time.Nanosecond() }
 
 // Unix 返回时间戳，可选择指定精度。
 //
@@ -376,7 +375,78 @@ func (t Time) IsDST() bool {
 	return t.time.IsDST()
 }
 
+// IsSame 返回 t 与 target 在指定单位下是否相同（包含上级单位一致性）。
+func (t Time) IsSame(u Unit, target Time) bool {
+	switch u {
+	case Century:
+		return t.Year()/100 == target.Year()/100
+	case Decade:
+		return t.Year()/10 == target.Year()/10
+	case Year:
+		return t.Year() == target.Year()
+	case Month:
+		ty, tm, _ := t.Date()
+		uy, um, _ := target.Date()
+		return ty == uy && tm == um
+	case Day:
+		ty, tm, td := t.Date()
+		uy, um, ud := target.Date()
+		return ty == uy && tm == um && td == ud
+	default:
+		l := t.cascade(fromAbs, false, u)
+		r := target.cascade(fromAbs, false, u)
+		return l.Eq(r)
+	}
+}
+
 // --- Aeon 包方法 ---
+
+// Near 在集合 times 中寻找距离 base 最近或最远的时间点。
+//
+// 参数 op：
+//   - "<" : 最近 (Closest)
+//   - ">" : 最远 (Farthest)
+func Near(op string, base Time, times ...Time) Time {
+	if len(times) == 0 {
+		return base
+	}
+
+	res := times[0]
+	diff := math.Abs(base.Sub(res).Seconds())
+
+	for i := 1; i < len(times); i++ {
+		secs := math.Abs(base.Sub(times[i]).Seconds())
+		if op == ">" && secs > diff {
+			diff, res = secs, times[i]
+		} else if op == "<" && secs < diff {
+			diff, res = secs, times[i]
+		}
+	}
+
+	return res
+}
+
+// Maxmin 返回一组时间中的极值
+//
+// 参数 op：
+//   - ">" : 最大值（最晚）
+//   - "<" : 最小值（最早）
+func Maxmin(op string, times ...Time) Time {
+	if len(times) == 0 {
+		return Time{}
+	}
+
+	res := times[0]
+	for i := 1; i < len(times); i++ {
+		if op == ">" && times[i].Gt(res) {
+			res = times[i]
+		} else if op == "<" && times[i].Lt(res) {
+			res = times[i]
+		}
+	}
+
+	return res
+}
 
 // Between 判断 t 是否在 (start, end) 区间内。
 //

@@ -11,11 +11,11 @@ func TestAbsSeriesDevilMatrix(t *testing.T) {
 
 	t.Run("核心纵向级联 (Century -> Second)", func(t *testing.T) {
 		// 1. 全链路定位: StartCentury(0, 2, 5, 5, 20, 10, 30, 0)
-		// 2000(C) -> 2020(D) -> 2025(Y) -> 5月(M) -> 20日(D) -> 10:30 -> 45s(Second=0保持)
+		// 2000(C) -> 2020(DateOnly) -> 2025(Y) -> 5月(M) -> 20日(DateOnly) -> 10:30 -> 45s(Second=0保持)
 		assert(t, base.StartCentury(0, 2, 5, 5, 20, 10, 30, 0), "2025-05-20 10:30:45", "全链路Start级联")
 
 		// 2. 深度End级联: EndYear(5, 6, 20, 15)
-		// 2025年(Y) -> 6月(M) -> 20日(D) -> 15时(H) -> 置满后续
+		// 2025年(Y) -> 6月(M) -> 20日(DateOnly) -> 15时(H) -> 置满后续
 		assert(t, base.EndYear(5, 6, 20, 15), "2025-06-20 15:59:59.999999999", "深度End级联")
 	})
 
