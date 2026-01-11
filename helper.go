@@ -13,32 +13,6 @@ const (
 	absoluteYears = 292277022400
 )
 
-// IsLeapYear 返回 year 是否闰年
-func IsLeapYear[T ~int](year T) bool {
-	return year%4 == 0 && (year%100 != 0 || year%400 == 0)
-}
-
-// DaysIn 返回 y 年天数或 y 年 m 月天数
-//
-// 各月份的最大天数：
-//
-//   - 1, 3, 5, 7, 8, 10, 12 月有 31 天；4, 6, 9, 11 月有 30 天；
-//   - 平年 2 月有 28 天，闰年 29 天。
-func DaysIn[T ~int](y T, m ...T) int {
-	if len(m) > 0 {
-		if m[0] == 2 && IsLeapYear(y) {
-			return 29
-		}
-		return maxDays[m[0]]
-	}
-
-	if IsLeapYear(y) {
-		return 366
-	}
-
-	return 365
-}
-
 // dateToAbsDays 从年月日中返回从绝对纪元到该天的天数 (标准库的实现)
 func dateToAbsDays(year int64, month time.Month, day int) uint64 {
 	amonth := uint32(month)
@@ -59,9 +33,9 @@ func dateToAbsDays(year int64, month time.Month, day int) uint64 {
 	return centurydays + uint64(int64(cday+ayday)+int64(day)-1)
 }
 
-// weekday 返回由 days 指定的星期几 (标准库的实现)
-func weekday(year int, month int, day int) time.Weekday {
-	days := dateToAbsDays(int64(year), time.Month(month), day)
+// week1day 返回 y年m月d日 的星期几 (标准库的实现)
+func weekday(y int, m int, d int) time.Weekday {
+	days := dateToAbsDays(int64(y), time.Month(m), d)
 	// 绝对年份的 3 月 1 日 (如 2000 年 3 月 1 日) 是星期三
 	return time.Weekday((days + uint64(time.Wednesday)) % 7)
 }

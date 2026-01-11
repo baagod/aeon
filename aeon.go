@@ -316,34 +316,26 @@ func (t Time) Sub(u Time) time.Duration {
 	return t.time.Sub(u.time)
 }
 
-// Before 返回 t 是否在 u 之前 (t < u)
-func (t Time) Before(u Time) bool {
+// Lt 返回 t 是否在 u 之前 (t < u)
+func (t Time) Lt(u Time) bool {
 	return t.time.Before(u.time)
 }
 
-// After 返回 t 是否在 u 之后 (t > u)
-func (t Time) After(u Time) bool {
+// Gt 返回 t 是否在 u 之后 (t > u)
+func (t Time) Gt(u Time) bool {
 	return t.time.After(u.time)
 }
 
-// Equal 返回 t == u
-func (t Time) Equal(u Time) bool {
+// Eq 返回 t == u
+func (t Time) Eq(u Time) bool {
 	return t.time.Equal(u.time)
 }
 
 // Compare 比较 t 和 u。
+//
+// 如果 t == u，返回 0；t > u 返回 1；t < u 返回 -1。
 func (t Time) Compare(u Time) int {
 	return t.time.Compare(u.time)
-}
-
-// Since 返回 t 到现在经过的持续时间
-func Since(t Time) time.Duration {
-	return time.Since(t.time)
-}
-
-// Until 返回现在到 t 经过的持续时间
-func Until(t Time) time.Duration {
-	return time.Until(t.time)
 }
 
 // --- 其他 ---
@@ -360,7 +352,98 @@ func (t Time) ZeroOr(u Time) Time {
 	return t
 }
 
-// IsDST 返回时间是否夏令时
+// IsLeapYear 返回 t 是否闰年
+func (t Time) IsLeapYear() bool {
+	return IsLeapYear(t.Year())
+}
+
+// IsLeapYear 返回 t 是否长年
+func (t Time) IsLongYear() bool {
+	return IsLongYear(t.Year())
+}
+
+// IsAM 返回时间是否在上午 (00:00:00 ~ 11:59:59)
+func (t Time) IsAM() bool { return t.Hour() < 12 }
+
+// IsWeekend 返回时间是否在周末 (周六或周日)
+func (t Time) IsWeekend() bool {
+	w := t.Weekday()
+	return w == time.Saturday || w == time.Sunday
+}
+
+// IsDST 返回 t 是否夏令时
 func (t Time) IsDST() bool {
 	return t.time.IsDST()
+}
+
+// --- Aeon 包方法 ---
+
+// Between 判断 t 是否在 (start, end) 区间内。
+//
+// 可选参数 bounds 用于控制边界包含性（默认为 "="）：
+//   - "=" : 包含边界
+//   - "!" : 不包含边界
+//   - "[" : 包含左边界
+//   - "]" : 包含右边界
+func (t Time) Between(start, end Time, bounds ...string) bool {
+	b := "=" // 默认包含边界
+	if len(bounds) > 0 {
+		b = bounds[0]
+	}
+	switch b {
+	case "!": // 全排除
+		return t.Gt(start) && t.Lt(end)
+	case "[": // 仅左含
+		return (t.Gt(start) || t.Eq(start)) && t.Lt(end)
+	case "]": // 仅右含
+		return t.Gt(start) && (t.Lt(end) || t.Eq(end))
+	default: // 全包含 (默认)
+		return (t.Gt(start) || t.Eq(start)) && (t.Lt(end) || t.Eq(end))
+	}
+}
+
+// Since 返回 t 到现在经过的持续时间
+func Since(t Time) time.Duration {
+	return time.Since(t.time)
+}
+
+// Until 返回现在到 t 经过的持续时间
+func Until(t Time) time.Duration {
+	return time.Until(t.time)
+}
+
+// IsLeapYear 返回 y 是否闰年
+func IsLeapYear(y int) bool {
+	return y%4 == 0 && (y%100 != 0 || y%400 == 0)
+}
+
+// IsLongYear 返回当前年份是否为 ISO 8601 规定的 “长年”（包含 53 周）。
+func IsLongYear(y int) bool {
+	// 获取该年 1月1日 是周几 (0=Sun, 4=Thu)
+	// 这里用我们内置的 weekday 函数，比 time.Date 快得多
+	w := weekday(y, 1, 1)
+
+	// ISO 8601 长年逻辑：
+	// 1. 1月1日是周四
+	// 2. 或者是闰年且1月1日是周三
+	return w == time.Thursday || (w == time.Wednesday && IsLeapYear(y))
+}
+
+// DaysIn 返回 y 年 m 月最大天数，如果忽略 m 则返回 y 年总天数。
+//
+//   - 1, 3, 5, 7, 8, 10, 12 月有 31 天；4, 6, 9, 11 月有 30 天。
+//   - 平年 2 月有 28 天，闰年 29 天。
+func DaysIn(y int, m ...int) int {
+	if len(m) > 0 {
+		if m[0] == 2 && IsLeapYear(y) {
+			return 29
+		}
+		return maxDays[m[0]]
+	}
+
+	if IsLeapYear(y) {
+		return 366
+	}
+
+	return 365
 }
