@@ -39,9 +39,9 @@ type Flag struct {
 
 // cascade 级联时间
 // Start/EndCentury (全绝对)
-// Start/EndByCentury (全相对)
+// StartBy/EndCentury (全相对)
 // StartAt/EndCentury (定位后偏移: Abs + Rel..)
-// Start/EndInCentury (偏移后定位: Rel + Abs..)
+// StartIn/EndCentury (偏移后定位: Rel + Abs..)
 // Add 全相对不对齐
 func (t Time) cascade(f from, fill bool, u Unit, args ...int) Time {
 	y, m, d := t.Date()
