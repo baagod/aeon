@@ -5,6 +5,7 @@ import "time"
 var (
 	zeroArgs = []int{0}
 	oneArgs  = []int{1}
+	absArgs  = []int{ABS}
 	// maxDays 每个月的最大天数
 	maxDays = [13]int{1, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
 )

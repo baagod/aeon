@@ -6,6 +6,13 @@ import (
 	"time"
 )
 
+func assert(t *testing.T, actual Time, expected string, name string) {
+	t.Helper()
+	if actual.String() != expected {
+		t.Errorf("%s: got [%s], want [%s]", name, actual, expected)
+	}
+}
+
 func TestTime_SubSecond(t *testing.T) {
 	tm := time.Date(2023, 1, 1, 12, 30, 45, 123456789, time.UTC)
 	at := Aeon(tm)
@@ -141,13 +148,6 @@ func TestTime_Diff(t *testing.T) {
 			t.Errorf("年差：绝对值 = %v, 期望约为 1", y3)
 		}
 	})
-}
-
-func assert(t *testing.T, actual Time, expected string, msg string) {
-	t.Helper()
-	if actual.String() != expected {
-		t.Errorf("%s, got [%s], want [%s]", msg, actual, expected)
-	}
 }
 
 // ---- F 泛型测试 ----
@@ -366,6 +366,63 @@ func TestTime_ExtremesAndNear(t *testing.T) {
 		}
 		if !Near(">", base, t1, t2, t3).Eq(t1) {
 			t.Error("Farthest from mid-2021 should be t1")
+		}
+	})
+}
+
+func TestTime_IsSame(t *testing.T) {
+	t1 := New(2024, 1, 31, 12, 0, 0)
+	t2 := New(2024, 1, 31, 15, 30, 0)
+	t3 := New(2025, 1, 31, 12, 0, 0) // 不同年
+	t4 := New(2024, 2, 1, 12, 0, 0)  // 不同月
+
+	t.Run("Day Level", func(t *testing.T) {
+		if !t1.IsSame(Day, t2) {
+			t.Error("Should be same day")
+		}
+		if t1.IsSame(Day, t3) {
+			t.Error("Should NOT be same day (different year)")
+		}
+		if t1.IsSame(Day, t4) {
+			t.Error("Should NOT be same day (different month)")
+		}
+	})
+
+	t.Run("Month Level", func(t *testing.T) {
+		t1_again := NewDate(2024, 1, 1)
+		if !t1.IsSame(Month, t1_again) {
+			t.Error("Should be same month")
+		}
+		if t1.IsSame(Month, t4) {
+			t.Error("Should NOT be same month (Jan vs Feb)")
+		}
+	})
+
+	t.Run("Sub-second Level", func(t *testing.T) {
+		m1 := New(2024, 1, 1, 12, 0, 0, 500*time.Millisecond)
+		m2 := New(2024, 1, 1, 12, 0, 0, 500*time.Millisecond+100*time.Microsecond)
+
+		if !m1.IsSame(Millisecond, m2) {
+			t.Error("Should be same milli")
+		}
+		if m1.IsSame(Microsecond, m2) {
+			t.Error("Should NOT be same micro")
+		}
+	})
+
+	t.Run("Year/Decade/Century", func(t *testing.T) {
+		y1 := NewDate(2024, 1, 1)
+		y2 := NewDate(2029, 1, 1)
+		y3 := NewDate(2031, 1, 1)
+
+		if !y1.IsSame(Decade, y2) {
+			t.Error("Should be same decade (2020s)")
+		}
+		if y1.IsSame(Decade, y3) {
+			t.Error("Should NOT be same decade")
+		}
+		if !y1.IsSame(Century, y3) {
+			t.Error("Should be same century (21st)")
 		}
 	})
 }

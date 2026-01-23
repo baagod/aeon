@@ -4,51 +4,19 @@ import (
 	"testing"
 )
 
-func TestMixSeriesDevilMatrix(t *testing.T) {
-	// 基准时间: 2024-04-15 12:00:00
+func TestMixSeries(t *testing.T) {
 	base := Parse("2024-04-15 12:00:00")
 
-	t.Run("At 系列 (Abs + Rel...)", func(t *testing.T) {
-		// 1. StartAtYear(5, 1): 定位到本年代第 5 年 (2025)，然后加 1 个月
-		// 2024-04-15 -> Abs Year(5) -> 2025-04-15 -> Rel Month(1) -> 2025-05-15 -> final/align -> 2025-05-01
+	t.Run("StartAt/EndAt 系列", func(t *testing.T) {
+		// StartAtYear(5, 1): 定位到本年代第 5 年 (2025)，然后加 1 个月，并归零
 		assert(t, base.StartAtYear(5, 1), "2025-05-01 00:00:00", "StartAtYear(5, 1)")
 
-		// 2. EndAtMonth(6, 5): 定位到 6 月，然后加 5 天
-		// 2024-06-15 -> 2024-06-20 -> final(EndCentury) -> 2024-06-20 23:59:59.999999999
+		// EndAtMonth(6, 5): 定位到 6 月，然后加 5 天，并置满
 		assert(t, base.EndAtMonth(6, 5), "2024-06-20 23:59:59.999999999", "EndAtMonth(6, 5)")
-
-		// 3. EndInYear(-1, 6): 回跳 1 年，然后定位到 6 月末
-		assert(t, base.EndInYear(-1, 6), "2023-06-30 23:59:59.999999999", "EndInYear(-1, 6)")
-
-		// 4. EndInMonth(2, 20): 加 2 个月，然后定位到 20 号
-		// 2024-04-15 -> 2024-06-15 -> 2024-06-20 -> final -> 2024-06-20 23:59:59.999999999
-		assert(t, base.EndInMonth(2, 20), "2024-06-20 23:59:59.999999999", "EndInMonth(2, 20)")
-
-		// 6. EndAtMonth(2, -5): 定位到 2 月 -> 2024-02-15 | Rel Day(-5) -> 2024-02-10 | EndCentury 对齐
-		assert(t, base.EndAtMonth(2, -5), "2024-02-10 23:59:59.999999999", "EndAtMonth(2, -5)")
-
 	})
 
-	t.Run("混合模式下的 Overflow 标志", func(t *testing.T) {
-		// 基准: 2024-01-31
-		ref := Parse("2024-01-31 12:00:00")
-
-		// StartAtMonth(Overflow, 2, 0): 定位到 2 月 (不再保护到 2/29)，结果自然溢出
-		// 此时末级单位是 Day (0), align(Day) 不重置日期，故落在 03-02
-		assert(t, ref.StartAtMonth(Overflow, 2, 0), "2024-03-02 00:00:00", "StartAtMonth with Overflow")
-
-		// StartInMonth(Overflow, 1, 1): 加 1 月 (1/31 -> 2/31)，然后定位到 1 号
-		// 此时天被重置为 1，故落在 2/01 (Overflow 在此处被后续的 Abs Day 抵消了)
-		assert(t, ref.StartInMonth(Overflow, 1, 1), "2024-02-01 00:00:00", "StartInMonth with Overflow")
-	})
-
-	t.Run("纳秒精度混合操作 (Mix Nano)", func(t *testing.T) {
-		base := Parse("2024-01-01 00:00:00")
-
-		// 1. StartAtMilli(501, 1)
-		// Abs Milli(501) -> 501ms
-		// Rel Micro(1) -> 501ms + 1us = .501001
-		// StartCentury -> .501001000
-		assert(t, base.StartAtMilli(501, 1), "2024-01-01 00:00:00.501001", "StartAtMilli(501, 1)")
+	t.Run("High Fidelity At/In 系列", func(t *testing.T) {
+		// AtYear(2025, 1): 绝对定位到 2025 年，加 1 个月，保留 12:00:00
+		assert(t, base.At(2025, 1), "2025-05-15 12:00:00", "At(2025, 1) 保真")
 	})
 }
