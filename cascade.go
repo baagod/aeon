@@ -4,25 +4,6 @@ import (
     "time"
 )
 
-type Unit int
-
-const (
-    Century Unit = iota
-    Decade
-    Year
-    Month
-    Day
-    Hour
-    Minute
-    Second
-    Millisecond
-    Microsecond
-    Nanosecond
-    Quarter // 季度流
-    Week    // 月周流
-    Weekday
-)
-
 type path int
 
 const (

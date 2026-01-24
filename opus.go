@@ -4,10 +4,30 @@ import (
     "time"
 )
 
+type Unit int
+
+const (
+    Century Unit = iota
+    Decade
+    Year
+    Month
+    Day
+    Hour
+    Minute
+    Second
+    Millisecond
+    Microsecond
+    Nanosecond
+    Quarter // 季度流
+    Week    // 月周流
+    Weekday // 星期流
+)
+
 var (
-    units    = []Unit{Century, Decade, Year, Month, Day, Hour, Minute, Second, Millisecond, Microsecond, Nanosecond} // 标准流
+    years    = []Unit{Century, Decade, Year, Month, Day, Hour, Minute, Second, Millisecond, Microsecond, Nanosecond} // 年序列
     quarters = []Unit{Quarter, Month, Day, Hour, Minute, Second, Millisecond, Microsecond, Nanosecond}               // 季度流
     weeks    = []Unit{Week, Weekday, Hour, Minute, Second, Millisecond, Microsecond, Nanosecond}                     // 月周流
+    weekdays = []Unit{Weekday, Hour, Minute, Second, Millisecond, Microsecond, Nanosecond}                           // 星期流
 )
 
 func (u Unit) seq() []Unit {
@@ -16,12 +36,11 @@ func (u Unit) seq() []Unit {
         return quarters
     case Week:
         return weeks
+    case Weekday:
+        return weekdays
     default:
-        if u <= Nanosecond {
-            return units[u:]
-        }
+        return years[u:]
     }
-    return []Unit{u}
 }
 
 func (u Unit) factor() int {
@@ -240,7 +259,8 @@ func applyAbs(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w, sw time.
         if n != 0 {
             // 识别是否处于 Week 的序数周级联中
             if c.ordWeek && p == Week && pN != 0 {
-                // 预平移坐标参考系：如果 n < 0，将参考点向左拨 1 天，让 0-6 索引与序数意图完美重合。
+                // 🦬 预平移坐标参考系：
+                // 如果 n < 0，将参考点向左拨 1 天，让 0-6 索引与序数意图完美重合。
                 if cur := int(weekday(y, m, d+(n>>63))); pN >= 0 {
                     d += (n - cur + 7) % 7
                 } else {
