@@ -54,15 +54,15 @@ func apply(f path, c Flag, first bool, u, p Unit, n, pN int, y, m, d, h, mm, s, 
         }
         return applyAbs(c, u, p, n, pN, y, m, d, h, mm, s, ns, w, sw)
     case goRel: // 全相对
-        return applyBy(c, u, p, n, pN, y, m, d, h, mm, s, ns, w)
+        return shift(c, u, p, n, pN, y, m, d, h, mm, s, ns, w)
     case goAt:
         if first {
             return applyAbs(c, u, p, n, pN, y, m, d, h, mm, s, ns, w, sw)
         }
-        return applyBy(c, u, p, n, pN, y, m, d, h, mm, s, ns, w)
+        return shift(c, u, p, n, pN, y, m, d, h, mm, s, ns, w)
     default: // goIn
         if first {
-            return applyBy(c, u, p, n, pN, y, m, d, h, mm, s, ns, w)
+            return shift(c, u, p, n, pN, y, m, d, h, mm, s, ns, w)
         }
         return applyAbs(c, u, p, n, pN, y, m, d, h, mm, s, ns, w, sw)
     }
@@ -341,8 +341,8 @@ func applyRel(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w, sw time.
     return y, m, d, h, mm, sec, ns, w
 }
 
-// applyBy 相对坐标偏移逻辑
-func applyBy(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w time.Weekday) (int, int, int, int, int, int, int, time.Weekday) {
+// shift 相对坐标偏移逻辑
+func shift(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w time.Weekday) (int, int, int, int, int, int, int, time.Weekday) {
     switch u {
     case Century:
         y += n * 100

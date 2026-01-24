@@ -72,7 +72,7 @@ func BenchmarkAeonMultiAdd(b *testing.B) {
     t := Now()
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
-        _ = t.AddYear(1, 2, 3, 4, 5, 6)
+        _ = t.ShYear(1, 2, 3, 4, 5, 6)
     }
 }
 
