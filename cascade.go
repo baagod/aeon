@@ -46,7 +46,7 @@ type Flag struct {
 }
 
 // cascade 级联时间核心引擎
-func cascade(t Time, f path, fill bool, u Unit, args ...int) Time {
+func cascade(t Time, f path, fill bool, u Unit, mask int, args ...int) Time {
     y, m, d := t.Date()
     h, mm, s := t.Clock()
     ns := t.time.Nanosecond()
@@ -57,13 +57,16 @@ func cascade(t Time, f path, fill bool, u Unit, args ...int) Time {
     c := Flag{fill: fill, goMode: f >= goAbs}
 
     if len(args) > 0 && args[0] < flagThreshold {
-        mask := args[0]
+        mask |= args[0] // 合并传入标志与参数中的标志
+        args = args[1:] // 消耗掉标志位参数
+    }
+
+    if mask != 0 {
         c.isoWeek = mask&ISO == ISO
         c.fullWeek = mask&Full == Full
         c.ordWeek = mask&Ord == Ord
         c.overflow = mask&Overflow == Overflow
         c.abs = mask&ABS == ABS
-        args = args[1:]
     }
 
     if len(args) == 0 {
@@ -101,25 +104,25 @@ func cascade(t Time, f path, fill bool, u Unit, args ...int) Time {
 }
 
 // a 归零时间
-func a(t Time, p path, u Unit, args ...int) Time {
-    return cascade(t, p, false, u, args...)
+func a(t Time, p path, u Unit, n ...int) Time {
+    return cascade(t, p, false, u, 0, n...)
 }
 
 // z 置满时间
-func z(t Time, p path, u Unit, args ...int) Time {
-    return cascade(t, p, true, u, args...)
+func z(t Time, p path, u Unit, n ...int) Time {
+    return cascade(t, p, true, u, 0, n...)
 }
 
 // --- 顶级导航方法（首个参数定位到真正的绝对年份）---
 
-func (t Time) Start(n ...int) Time   { return a(t, seAbs, Year, append(absArgs, n...)...) }
-func (t Time) StartAt(n ...int) Time { return a(t, seAt, Year, append(absArgs, n...)...) }
+func (t Time) Start(n ...int) Time   { return cascade(t, seAbs, false, Year, ABS, n...) }
+func (t Time) StartAt(n ...int) Time { return cascade(t, seAt, false, Year, ABS, n...) }
 
-func (t Time) End(n ...int) Time   { return z(t, seAbs, Year, append(absArgs, n...)...) }
-func (t Time) EndAt(n ...int) Time { return z(t, seAt, Year, append(absArgs, n...)...) }
+func (t Time) End(n ...int) Time   { return cascade(t, seAbs, true, Year, ABS, n...) }
+func (t Time) EndAt(n ...int) Time { return cascade(t, seAt, true, Year, ABS, n...) }
 
-func (t Time) Go(n ...int) Time { return a(t, goAbs, Year, append(absArgs, n...)...) }
-func (t Time) At(n ...int) Time { return a(t, goAt, Year, append(absArgs, n...)...) }
+func (t Time) Go(n ...int) Time { return cascade(t, goAbs, false, Year, ABS, n...) }
+func (t Time) At(n ...int) Time { return cascade(t, goAt, false, Year, ABS, n...) }
 
 // --- 全绝对定位级联 ---
 

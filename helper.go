@@ -3,69 +3,68 @@ package aeon
 import "time"
 
 var (
-	zeroArgs = []int{0}
-	oneArgs  = []int{1}
-	absArgs  = []int{ABS}
-	// maxDays 每个月的最大天数
-	maxDays = [13]int{1, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+    zeroArgs = []int{0}
+    oneArgs  = []int{1}
+
+    // maxDays 每个月的最大天数
+    maxDays = [13]int{1, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+
+    // pow10 预定义的 10 的幂次方表，用于高精度计算
+    pow10 = [...]int64{
+        1, 10, 100, 1000, 10000, 100000, 1e6, 1e7, 1e8, 1e9,
+        1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18,
+    }
 )
 
 const (
-	absoluteYears = 292277022400
+    absoluteYears = 292277022400
 )
 
 // dateToAbsDays 从年月日中返回从绝对纪元到该天的天数 (标准库的实现)
 func dateToAbsDays(year int64, month time.Month, day int) uint64 {
-	amonth := uint32(month)
-	janFeb := uint32(0)
-	if amonth < 3 {
-		janFeb = 1
-	}
+    amonth := uint32(month)
+    janFeb := uint32(0)
+    if amonth < 3 {
+        janFeb = 1
+    }
 
-	amonth += 12 * janFeb
-	y := uint64(year) - uint64(janFeb) + absoluteYears
+    amonth += 12 * janFeb
+    y := uint64(year) - uint64(janFeb) + absoluteYears
 
-	ayday := (979*amonth - 2919) >> 5
-	century := y / 100
-	cyear := uint32(y % 100)
-	cday := 1461 * cyear / 4
-	centurydays := 146097 * century / 4
+    ayday := (979*amonth - 2919) >> 5
+    century := y / 100
+    cyear := uint32(y % 100)
+    cday := 1461 * cyear / 4
+    centurydays := 146097 * century / 4
 
-	return centurydays + uint64(int64(cday+ayday)+int64(day)-1)
+    return centurydays + uint64(int64(cday+ayday)+int64(day)-1)
 }
 
 // week1day 返回 y年m月d日 的星期几 (标准库的实现)
 func weekday(y int, m int, d int) time.Weekday {
-	days := dateToAbsDays(int64(y), time.Month(m), d)
-	// 绝对年份的 3 月 1 日 (如 2000 年 3 月 1 日) 是星期三
-	return time.Weekday((days + uint64(time.Wednesday)) % 7)
+    days := dateToAbsDays(int64(y), time.Month(m), d)
+    // 绝对年份的 3 月 1 日 (如 2000 年 3 月 1 日) 是星期三
+    return time.Weekday((days + uint64(time.Wednesday)) % 7)
 }
 
 // addMonth 计算月溢出
 func addMonth(y, m, n int) (int, int) {
-	months := m + n
-	y += (months - 1) / 12
-	m = (months-1)%12 + 1
-	if m <= 0 {
-		m += 12
-		y--
-	}
-	return y, m
+    months := m + n
+    y += (months - 1) / 12
+    m = (months-1)%12 + 1
+    if m <= 0 {
+        m += 12
+        y--
+    }
+    return y, m
 }
 
 // clamp 将值限制在 [minimum, maximum] 范围内
 func clamp[T ~int | ~float32 | ~float64](value, minimum, maximum T) T {
-	if value < minimum {
-		return minimum
-	} else if value > maximum {
-		return maximum
-	}
-	return value
-}
-
-func minimum[T ~int | ~float32 | ~float64](value, minimum T) T {
-	if value < minimum {
-		return minimum
-	}
-	return value
+    if value < minimum {
+        return minimum
+    } else if value > maximum {
+        return maximum
+    }
+    return value
 }

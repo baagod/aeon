@@ -10,11 +10,6 @@ var (
     DefaultWeekStarts = time.Monday
     // DefaultTimeZone Parse() 使用的默认时区
     DefaultTimeZone = time.Local
-    // pow10 预定义的 10 的幂次方表，用于高精度计算
-    pow10 = [...]int64{
-        1, 10, 100, 1000, 10000, 100000, 1e6, 1e7, 1e8, 1e9,
-        1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18,
-    }
 )
 
 type Time struct {
