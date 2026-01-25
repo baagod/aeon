@@ -39,6 +39,17 @@ func New(y, m, d, h, mm, s int, add ...any) Time {
 
     for _, arg := range add {
         switch v := arg.(type) {
+        case int:
+            switch {
+            case v == 0:
+                ns = 0
+            case v <= 999: // 1-3：推断为毫秒
+                ns = v * 1_000_000
+            case v <= 999_999: // 4-6：推断为微秒
+                ns = v * 1000
+            default: // 7 及以上：推断为纳秒
+                ns = v
+            }
         case time.Duration:
             ns = int(v.Nanoseconds())
         default: // string, *time.Location

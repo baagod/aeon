@@ -152,17 +152,15 @@ func applyAbs(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w, sw time.
         if c.abs {
             y = n
         } else if c.goMode || n != 0 {
-            if n < 0 {
-                y += 10
-            }
-            y = (y - y%10) + n
+            // 偏移补偿算法：如果 n < 0，补偿 10 年。
+            y = (y - y%10) + (10 & (n >> 63)) + n
         }
     case Quarter:
         if n > 0 {
             m = (n-1)*3 + 1
         } else if n < 0 {
             m = (5+n-1)*3 + 1
-        } else {
+        } else if !c.goMode {
             m -= (m - 1) % 3
         }
     case Month:
@@ -281,28 +279,28 @@ func applyAbs(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w, sw time.
             d = DaysIn(y, m) + n + 1
         }
     case Hour:
-        if n > 0 {
+        if n >= 0 {
             h = n
-        } else if n < 0 {
+        } else {
             h = 24 + n
         }
     case Minute:
-        if n > 0 {
+        if n >= 0 {
             mm = n
-        } else if n < 0 {
+        } else {
             mm = 60 + n
         }
     case Second:
-        if n > 0 {
+        if n >= 0 {
             sec = n
-        } else if n < 0 {
+        } else {
             sec = 60 + n
         }
     case Millisecond, Microsecond, Nanosecond:
         f := u.factor()
-        if pf := f * 1000; n > 0 {
+        if pf := f * 1000; n >= 0 {
             ns = (ns/pf)*pf + n*f
-        } else if n < 0 {
+        } else {
             ns = (ns/pf)*pf + pf + n*f
         }
     }
