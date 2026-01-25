@@ -8,7 +8,7 @@ type path int
 
 const (
     seAbs path = iota // Start/EndCentury (全绝对)
-    seRel             // Start/EndShCentury (全相对)
+    seRel             // Start/EndByCentury (全相对)
     seAt              // StartAt/EndCentury (定位后偏移: Abs + Rel..)
     seIn              // Start/EndInCentury (偏移后定位: Rel + Abs..)
     goAbs
@@ -158,35 +158,35 @@ func (t Time) EndWeekday(n ...int) Time { return z(t, seAbs, Weekday, n...) }
 
 // --- 全相对定位级联 ---
 
-func (t Time) StartShCentury(n ...int) Time { return a(t, seRel, Century, n...) }
-func (t Time) StartShDecade(n ...int) Time  { return a(t, seRel, Decade, n...) }
-func (t Time) StartShYear(n ...int) Time    { return a(t, seRel, Year, n...) }
-func (t Time) StartShMonth(n ...int) Time   { return a(t, seRel, Month, n...) }
-func (t Time) StartShDay(n ...int) Time     { return a(t, seRel, Day, n...) }
-func (t Time) StartShHour(n ...int) Time    { return a(t, seRel, Hour, n...) }
-func (t Time) StartShMinute(n ...int) Time  { return a(t, seRel, Minute, n...) }
-func (t Time) StartShSecond(n ...int) Time  { return a(t, seRel, Second, n...) }
-func (t Time) StartShMilli(n ...int) Time   { return a(t, seRel, Millisecond, n...) }
-func (t Time) StartShMicro(n ...int) Time   { return a(t, seRel, Microsecond, n...) }
-func (t Time) StartShNano(n ...int) Time    { return a(t, seRel, Nanosecond, n...) }
-func (t Time) StartShQuarter(n ...int) Time { return a(t, seRel, Quarter, n...) }
-func (t Time) StartShWeek(n ...int) Time    { return a(t, seRel, Week, n...) }
-func (t Time) StartShWeekday(n ...int) Time { return a(t, seRel, Weekday, n...) }
+func (t Time) StartByCentury(n ...int) Time { return a(t, seRel, Century, n...) }
+func (t Time) StartByDecade(n ...int) Time  { return a(t, seRel, Decade, n...) }
+func (t Time) StartByYear(n ...int) Time    { return a(t, seRel, Year, n...) }
+func (t Time) StartByMonth(n ...int) Time   { return a(t, seRel, Month, n...) }
+func (t Time) StartByDay(n ...int) Time     { return a(t, seRel, Day, n...) }
+func (t Time) StartByHour(n ...int) Time    { return a(t, seRel, Hour, n...) }
+func (t Time) StartByMinute(n ...int) Time  { return a(t, seRel, Minute, n...) }
+func (t Time) StartBySecond(n ...int) Time  { return a(t, seRel, Second, n...) }
+func (t Time) StartByMilli(n ...int) Time   { return a(t, seRel, Millisecond, n...) }
+func (t Time) StartByMicro(n ...int) Time   { return a(t, seRel, Microsecond, n...) }
+func (t Time) StartByNano(n ...int) Time    { return a(t, seRel, Nanosecond, n...) }
+func (t Time) StartByQuarter(n ...int) Time { return a(t, seRel, Quarter, n...) }
+func (t Time) StartByWeek(n ...int) Time    { return a(t, seRel, Week, n...) }
+func (t Time) StartByWeekday(n ...int) Time { return a(t, seRel, Weekday, n...) }
 
-func (t Time) EndShCentury(n ...int) Time { return z(t, seRel, Century, n...) }
-func (t Time) EndShDecade(n ...int) Time  { return z(t, seRel, Decade, n...) }
-func (t Time) EndShYear(n ...int) Time    { return z(t, seRel, Year, n...) }
-func (t Time) EndShMonth(n ...int) Time   { return z(t, seRel, Month, n...) }
-func (t Time) EndShDay(n ...int) Time     { return z(t, seRel, Day, n...) }
-func (t Time) EndShHour(n ...int) Time    { return z(t, seRel, Hour, n...) }
-func (t Time) EndShMinute(n ...int) Time  { return z(t, seRel, Minute, n...) }
-func (t Time) EndShSecond(n ...int) Time  { return z(t, seRel, Second, n...) }
-func (t Time) EndShMilli(n ...int) Time   { return z(t, seRel, Millisecond, n...) }
-func (t Time) EndShMicro(n ...int) Time   { return z(t, seRel, Microsecond, n...) }
-func (t Time) EndShNano(n ...int) Time    { return z(t, seRel, Nanosecond, n...) }
-func (t Time) EndShQuarter(n ...int) Time { return z(t, seRel, Quarter, n...) }
-func (t Time) EndShWeek(n ...int) Time    { return z(t, seRel, Week, n...) }
-func (t Time) EndShWeekday(n ...int) Time { return z(t, seRel, Weekday, n...) }
+func (t Time) EndByCentury(n ...int) Time { return z(t, seRel, Century, n...) }
+func (t Time) EndByDecade(n ...int) Time  { return z(t, seRel, Decade, n...) }
+func (t Time) EndByYear(n ...int) Time    { return z(t, seRel, Year, n...) }
+func (t Time) EndByMonth(n ...int) Time   { return z(t, seRel, Month, n...) }
+func (t Time) EndByDay(n ...int) Time     { return z(t, seRel, Day, n...) }
+func (t Time) EndByHour(n ...int) Time    { return z(t, seRel, Hour, n...) }
+func (t Time) EndByMinute(n ...int) Time  { return z(t, seRel, Minute, n...) }
+func (t Time) EndBySecond(n ...int) Time  { return z(t, seRel, Second, n...) }
+func (t Time) EndByMilli(n ...int) Time   { return z(t, seRel, Millisecond, n...) }
+func (t Time) EndByMicro(n ...int) Time   { return z(t, seRel, Microsecond, n...) }
+func (t Time) EndByNano(n ...int) Time    { return z(t, seRel, Nanosecond, n...) }
+func (t Time) EndByQuarter(n ...int) Time { return z(t, seRel, Quarter, n...) }
+func (t Time) EndByWeek(n ...int) Time    { return z(t, seRel, Week, n...) }
+func (t Time) EndByWeekday(n ...int) Time { return z(t, seRel, Weekday, n...) }
 
 // ---- 锚位（绝对）后偏移级联 ----
 
@@ -304,17 +304,17 @@ func (t Time) InWeek(n ...int) Time    { return a(t, goIn, Week, n...) }
 
 // --- 添加时间 ---
 
-func (t Time) Sh(d time.Duration) Time { return Time{time: t.time.Add(d), weekStarts: t.weekStarts} }
-func (t Time) ShCentury(n ...int) Time { return a(t, goRel, Century, n...) }
-func (t Time) ShDecade(n ...int) Time  { return a(t, goRel, Decade, n...) }
-func (t Time) ShYear(n ...int) Time    { return a(t, goRel, Year, n...) }
-func (t Time) ShMonth(n ...int) Time   { return a(t, goRel, Month, n...) }
-func (t Time) ShDay(n ...int) Time     { return a(t, goRel, Day, n...) }
-func (t Time) ShHour(n ...int) Time    { return a(t, goRel, Hour, n...) }
-func (t Time) ShMinute(n ...int) Time  { return a(t, goRel, Minute, n...) }
-func (t Time) ShSecond(n ...int) Time  { return a(t, goRel, Second, n...) }
-func (t Time) ShMilli(n ...int) Time   { return a(t, goRel, Millisecond, n...) }
-func (t Time) ShMicro(n ...int) Time   { return a(t, goRel, Microsecond, n...) }
-func (t Time) ShNano(n ...int) Time    { return a(t, goRel, Nanosecond, n...) }
-func (t Time) ShQuarter(n ...int) Time { return a(t, goRel, Quarter, n...) }
-func (t Time) ShWeek(n ...int) Time    { return a(t, goRel, Week, n...) }
+func (t Time) By(d time.Duration) Time { return Time{time: t.time.Add(d), weekStarts: t.weekStarts} }
+func (t Time) ByCentury(n ...int) Time { return a(t, goRel, Century, n...) }
+func (t Time) ByDecade(n ...int) Time  { return a(t, goRel, Decade, n...) }
+func (t Time) ByYear(n ...int) Time    { return a(t, goRel, Year, n...) }
+func (t Time) ByMonth(n ...int) Time   { return a(t, goRel, Month, n...) }
+func (t Time) ByDay(n ...int) Time     { return a(t, goRel, Day, n...) }
+func (t Time) ByHour(n ...int) Time    { return a(t, goRel, Hour, n...) }
+func (t Time) ByMinute(n ...int) Time  { return a(t, goRel, Minute, n...) }
+func (t Time) BySecond(n ...int) Time  { return a(t, goRel, Second, n...) }
+func (t Time) ByMilli(n ...int) Time   { return a(t, goRel, Millisecond, n...) }
+func (t Time) ByMicro(n ...int) Time   { return a(t, goRel, Microsecond, n...) }
+func (t Time) ByNano(n ...int) Time    { return a(t, goRel, Nanosecond, n...) }
+func (t Time) ByQuarter(n ...int) Time { return a(t, goRel, Quarter, n...) }
+func (t Time) ByWeek(n ...int) Time    { return a(t, goRel, Week, n...) }

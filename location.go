@@ -66,7 +66,7 @@ const (
     Darwin     = "Australia/Darwin"    // 达尔文
 )
 
-// Loc 返回指定的时区。
+// NewZone 返回指定的时区。
 //
 // 参数：
 //   - name: 时区名称（如 aeon.Shanghai 或 "Asia/Shanghai"）
@@ -74,9 +74,9 @@ const (
 //
 // 示例：
 //
-//	aeon.Loc(aeon.Shanghai)      // 返回上海时区对象
-//	aeon.Loc("CST", 8)           // 返回东八区固定时区对象
-func Loc(name string, offset ...int) (loc *time.Location) {
+//	aeon.NewZone(aeon.Shanghai)      // 返回上海时区对象
+//	aeon.NewZone("CST", 8)           // 返回东八区固定时区对象
+func NewZone(name string, offset ...int) (loc *time.Location) {
     if len(offset) > 0 {
         return time.FixedZone(name, offset[0]*3600)
     }
@@ -94,4 +94,14 @@ func Loc(name string, offset ...int) (loc *time.Location) {
     }
 
     return
+}
+
+func timeZone(zone any) *time.Location {
+    switch v := zone.(type) {
+    case *time.Location:
+        return v
+    case string:
+        return NewZone(v)
+    }
+    return &time.Location{}
 }

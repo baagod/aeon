@@ -3,7 +3,8 @@
     "allow": [
       "mcp__web-reader__webReader",
       "mcp__web-search-prime__webSearchPrime",
-      "Bash(go test:*)"
+      "Bash(go test:*)",
+      "Bash(go doc:*)"
     ]
   }
 }

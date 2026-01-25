@@ -34,34 +34,22 @@ func Now(loc ...*time.Location) Time {
     return Time{time: time.Now().In(l), weekStarts: DefaultWeekStarts}
 }
 
-func New(y, m, d, h, mm, s int, others ...any) Time {
-    loc, ns := DefaultTimeZone, 0
+func New(y, m, d, h, mm, s int, add ...any) Time {
+    l, ns := DefaultTimeZone, 0
 
-    for _, arg := range others {
+    for _, arg := range add {
         switch v := arg.(type) {
         case time.Duration:
             ns = int(v.Nanoseconds())
-        case *time.Location:
-            loc = v
+        default: // string, *time.Location
+            l = timeZone(v)
         }
     }
 
     return Time{
-        time:       time.Date(y, time.Month(m), d, h, mm, s, ns, loc),
+        time:       time.Date(y, time.Month(m), d, h, mm, s, ns, l),
         weekStarts: DefaultWeekStarts,
     }
-}
-
-func NewDate(y, m, d int, others ...any) Time {
-    return New(y, m, d, 0, 0, 0, others...)
-}
-
-func NewHour(y, m, d, h int, others ...any) Time {
-    return New(y, m, d, h, 0, 0, others...)
-}
-
-func NewMinute(y, m, d, h, mm int, others ...any) Time {
-    return New(y, m, d, h, mm, 0, others...)
 }
 
 // WithWeekStarts 返回新实例，周起始日为 w。
@@ -70,7 +58,7 @@ func (t Time) WithWeekStarts(w time.Weekday) Time {
 }
 
 // Unix 返回给定时间戳的时间。secs 可以是秒、毫秒、微妙或纳秒级时间戳。
-func Unix(secs int64, utc ...bool) Time {
+func Unix(secs int64, loc ...*time.Location) Time {
     v, t := secs, time.Time{}
     if secs < 0 { // 处理公元前时间戳
         v = -secs
@@ -87,8 +75,8 @@ func Unix(secs int64, utc ...bool) Time {
         t = time.Unix(0, secs)
     }
 
-    if len(utc) > 0 && utc[0] {
-        t = t.UTC()
+    if len(loc) > 0 && loc[0] != nil {
+        t = t.In(loc[0])
     }
 
     return Aeon(t)
