@@ -4,7 +4,18 @@
       "mcp__web-reader__webReader",
       "mcp__web-search-prime__webSearchPrime",
       "Bash(go test:*)",
-      "Bash(go doc:*)"
+      "Bash(go doc:*)",
+      "mcp__zread__search_doc",
+      "mcp__zread__get_repo_structure",
+      "mcp__zread__read_file",
+      "WebSearch",
+      "Bash(npx:*)",
+      "Bash(npm search:*)",
+      "Bash(npm view:*)",
+      "Bash(claude:*)",
+      "Bash(git clone:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)"
     ]
   }
 }

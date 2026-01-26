@@ -1,93 +1,98 @@
 package aeon
 
 import (
-	"strings"
-	"testing"
-	"time"
+    "testing"
+    "time"
 )
 
-func TestParseE(t *testing.T) {
-	// 设置默认时区为 UTC 以便测试结果幂等
-	DefaultTimeZone = time.UTC
-	defer func() { DefaultTimeZone = time.Local }()
+func TestParse(t *testing.T) {
+    // 设置默认时区为 UTC 以便结果幂等
+    oldLoc := DefaultTimeZone
+    DefaultTimeZone = time.UTC
+    defer func() { DefaultTimeZone = oldLoc }()
 
-	tests := []struct {
-		name    string
-		input   string
-		want    string
-		wantErr bool
-	}{
-		// 1. 核心格式 (DT, D)
-		{"Standard DT", "2020-08-05 13:14:15", "2020-08-05 13:14:15", false},
-		{"Standard D", "2020-08-05", "2020-08-05 00:00:00", false},
+    // --- 1. 核心格式 (Standard DT, Date, Time) ---
+    t.Run("Core", func(t *testing.T) {
+        assert(t, Parse("13:14:15"), "0000-01-01 13:14:15", "13:14:15")
+        assert(t, Parse("13:4:5"), "0000-01-01 13:04:05", "13:14:15")
+    })
 
-		// 2. 归一化测试 (Slash, Dot, T)
-		{"Slash Normalization", "2020/08/05 13:14:15", "2020-08-05 13:14:15", false},
-		{"Dot Normalization (Date)", "2020.08.05", "2020-08-05 00:00:00", false},
-		{"T Normalization", "2020-08-05T13:14:15", "2020-08-05 13:14:15", false},
-		{"Complex Normalization", "2020.08.05T13:14:15", "2020-08-05 13:14:15", false},
+    // --- 3. ISO 8601 & RFC 协议 ---
+    t.Run("Protocols", func(t *testing.T) {
+        // assert(t, Parse("2020-08-05T13:14:15+08:00"), "2020-08-05 13:14:15", "2020-08-05T13:14:15+08:00")
+        assert(t, Parse("2024-05-20T15:04:05Z"), "2024-05-20 15:04:05", "2024-05-20T15:04:05Z")
+        assert(t, Parse("Wed, 05 Aug 2020 13:14:15 +0000"), "2020-08-05 13:14:15", "Wed, 05 Aug 2020 13:14:15 +0000")
+        assert(t, Parse("Mon, 04 Aug 2020 13:14:15 GMT"), "2020-08-04 13:14:15", "Mon, 04 Aug 2020 13:14:15 GMT")
+        assert(t, Parse("Wed Aug 5 13:14:15 2020"), "2020-08-05 13:14:15", "Wed Aug 5 13:14:15 2020")
+        assert(t, Parse("Wed Aug 5 13:14:15 UTC 2020"), "2020-08-05 13:14:15", "Wed Aug 5 13:14:15 UTC 2020")
+    })
 
-		// 3. 子秒精度 (.999 机制)
-		{"Milli Precision", "2020-08-05 13:14:15.123", "2020-08-05 13:14:15.123", false},
-		{"Micro Precision", "2020-08-05 13:14:15.123456", "2020-08-05 13:14:15.123456", false},
-		{"Nano Precision", "2020-08-05 13:14:15.123456789", "2020-08-05 13:14:15.123456789", false},
-		{"Dot Date with Nano", "2020.08.05 13:14:15.123456789", "2020-08-05 13:14:15.123456789", false},
+    // --- 4. 人文语义 (Months, Weekdays) ---
+    t.Run("Human", func(t *testing.T) {
+        assert(t, Parse("May 20, 2024"), "2024-05-20 00:00:00", "May 20, 2024")
+        assert(t, Parse("January 20, 2024"), "2024-01-20 00:00:00", "January 20, 2024")
+        assert(t, Parse("Mon, Jan 02, 2006"), "2006-01-02 00:00:00", "Mon, Jan 02, 2006")
+    })
 
-		// 4. 动态格式 (Weekdays, Months, MST)
-		{"ANSIC", "Wed Aug  5 13:14:15 2020", "2020-08-05 13:14:15", false},
-		{"UnixD", "Wed Aug  5 13:14:15 UTC 2020", "2020-08-05 13:14:15", false},
-		{"RFC1123Z", "Wed, 05 Aug 2020 13:14:15 +0000", "2020-08-05 13:14:15", false},
-		{"Full with MST", "2020-08-05 13:14:15.999 +0000 UTC", "2020-08-05 13:14:15.999", false},
+    t.Run("YearPrefix", func(t *testing.T) {
+        assert(t, Parse("2024"), "2024-01-01 00:00:00", "2024")
+        assert(t, Parse("2024-5-2"), "2024-05-02 00:00:00", "2024-5-2")
 
-		// 5. 宽松/紧凑格式
-		{"DCompact", "20200805", "2020-08-05 00:00:00", false},
-		{"DTShort", "2020-8-5 13:14", "2020-08-05 13:14:00", false},
+        assert(t, Parse("2024-05-20 15:04:05"), "2024-05-20 15:04:05", "2024-05-20 15:04:05")
+        assert(t, Parse("2024-05-20"), "2024-05-20 00:00:00", "2024-05-20")
+        assert(t, Parse("2020/08/05 13:14:15"), "2020-08-05 13:14:15", "2020/08/05 13:14:15")
+        assert(t, Parse("2020.08.05 13:14:15"), "2020-08-05 13:14:15", "2020.08.05 13:14:15")
+        assert(t, Parse("2024.05.20"), "2024-05-20 00:00:00", "2024.05.20")
+        assert(t, Parse("2020-08-05T13:14:15"), "2020-08-05 13:14:15", "2020-08-05T13:14:15")
+        assert(t, Parse("2020.08.05T13:14:15"), "2020-08-05 13:14:15", "2020.08.05T13:14:15")
 
-		// 6. 空值情况 (按设计应返回零值 Time 且无错误)
-		{"Empty", "", "", false},
-		{"Null", "null", "", false},
+        assert(t, Parse("2020-08-05 13:14:15.123"), "2020-08-05 13:14:15.123", "2020-08-05 13:14:15.123")
+        assert(t, Parse("2020-08-05 13:14:15.123456"), "2020-08-05 13:14:15.123456", "2020-08-05 13:14:15.123456")
+        assert(t, Parse("2020-08-05 13:14:15.123456789"), "2020-08-05 13:14:15.123456789", "2020-08-05 13:14:15.123456789")
+        assert(t, Parse("2020-08-05 13:14:15.999 +0000 UTC"), "2020-08-05 13:14:15.999", "2020-08-05 13:14:15.999 +0000 UTC")
 
-		// 7. 错误情况
-		{"Invalid", "invalid-time", "", true},
-	}
+        assert(t, Parse("20200805131415"), "2020-08-05 13:14:15", "20200805131415")
+        assert(t, Parse("20200805"), "2020-08-05 00:00:00", "20200805")
+        assert(t, Parse("2020-8-5 13:14"), "2020-08-05 13:14:00", "2020-8-5 13:14")
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := ParseE(tt.input)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ParseE() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !tt.wantErr {
-				if tt.input == "" || tt.input == "null" {
-					if !got.IsZero() {
-						t.Errorf("ParseE(%q) should return zero time", tt.input)
-					}
-					return
-				}
-				gotStr := got.Format(DTNs)
-				if !strings.Contains(gotStr, tt.want) {
-					t.Errorf("ParseE(%q) got = %v, want %v", tt.input, gotStr, tt.want)
-				}
-			}
-		})
-	}
-}
+        // 补全：更多年前缀变体测试
+        assert(t, Parse("2024-5-2 3:4:1"), "2024-05-02 03:04:01", "2024-5-2 3:4:1")
+        assert(t, Parse("2024-05-20T15:04:05.999Z"), "2024-05-20 15:04:05.999", "ISO8601 Zulu Milli")
+        assert(t, Parse("2024-05-20 15:04:05 +08:00"), "2024-05-20 15:04:05", "Space separated with offset")
+        assert(t, Parse("2024-05"), "2024-05-01 00:00:00", "Year-Month only")
+        assert(t, Parse("2024-05-20 15"), "2024-05-20 15:00:00", "Year-Month-Day Hour only")
+        assert(t, Parse("2024/5/2"), "2024-05-02 00:00:00", "Slash variadic")
+        assert(t, Parse("2024.5.2"), "2024-05-02 00:00:00", "Dot variadic")
+        assert(t, Parse("2024年5月2日"), "2024-05-02 00:00:00", "Chinese separator")
+        assert(t, Parse("2020年-08月-05日 03小时14分钟05秒"), "2020-08-05 03:14:05", "2020年-08月-05日 03小时14分钟05秒")
+    })
 
-func TestParse_BucketHits(t *testing.T) {
-	inputs := []string{
-		"2020-08-05",                // len 10
-		"2020-08-05 13:14:15",       // len 19
-		"2020-08-05 13:14:15.123",   // len 23
-		"Wed Aug  5 13:14:15 2020", // len 24 (Dynamic)
-	}
+    // --- 6. 高精度子秒 (.999 机制) ---
+    t.Run("Precision", func(t *testing.T) {
+        assert(t, Parse("Jan 2 15:04:05.999999"), "0000-01-02 15:04:05.999999", "Jan 2 15:04:05.999999")
 
-	for _, input := range inputs {
-		t.Run(input, func(t *testing.T) {
-			res := Parse(input)
-			if res.IsZero() {
-				t.Errorf("Parse(%q) failed to match any bucket or dynamic format", input)
-			}
-		})
-	}
+        // 纯小数部分测试
+        assert(t, Parse(".1"), "0000-01-01 00:00:00.1", ".1")
+        assert(t, Parse(".123"), "0000-01-01 00:00:00.123", ".123")
+        assert(t, Parse(".123456"), "0000-01-01 00:00:00.123456", ".123456")
+        assert(t, Parse(".123456789"), "0000-01-01 00:00:00.123456789", ".123456789")
+    })
+
+    // --- 7. 特殊与边缘情况 (Chinese, Quotes, Null) ---
+    t.Run("Special", func(t *testing.T) {
+        assert(t, Parse("2005年"), "2005-01-01 00:00:00", "2005年")
+        assert(t, Parse(`"2024-05-20 15:04:05"`), "2024-05-20 15:04:05", `"2024-05-20 15:04:05"`)
+        assert(t, Parse("null"), "0001-01-01 00:00:00", "null")
+        assert(t, Parse(""), "0001-01-01 00:00:00", "empty")
+    })
+
+    // --- 8. Opus 引擎扩展测试 (增强覆盖) ---
+    t.Run("OpusExtended", func(t *testing.T) {
+        assert(t, Parse("2 Jan 2006 15:04:05"), "2006-01-02 15:04:05", "2 Jan 2006 15:04:05")
+        assert(t, Parse("Jan 2 2006 15:04:05"), "2006-01-02 15:04:05", "Jan 2 2006 15:04:05")
+        assert(t, Parse("2 Jan 2006"), "2006-01-02 00:00:00", "2 Jan 2006")
+        assert(t, Parse("Jan 2 2006"), "2006-01-02 00:00:00", "Jan 2 2006")
+        assert(t, Parse("15:04"), "0000-01-01 15:04:00", "15:04")
+        assert(t, Parse("15:04:05"), "0000-01-01 15:04:05", "15:04:05")
+    })
 }

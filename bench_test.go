@@ -5,6 +5,7 @@ import (
     "time"
 
     "github.com/dromara/carbon/v2"
+    "github.com/relvacode/iso8601"
 )
 
 // --- 创建 ---
@@ -640,39 +641,92 @@ func Benchmark_End(b *testing.B) {
 // --- Parse ---
 
 func Benchmark_Parse(b *testing.B) {
-    b.Run("Aeon/DateTime", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
-            _ = Parse("2020-08-05 13:14:15")
-        }
-    })
-
-    b.Run("Carbon/DateTime", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
-            _ = carbon.Parse("2020-08-05 13:14:15")
-        }
-    })
-
+    // Date
     b.Run("Aeon/Date", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             _ = Parse("2020-08-05")
         }
     })
 
-    b.Run("Carbon/Date", func(b *testing.B) {
+    b.Run("Iso8601/Date", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
-            _ = carbon.Parse("2020-08-05")
+            _, _ = iso8601.ParseString("2020-08-05")
         }
     })
 
-    b.Run("Aeon/Time", func(b *testing.B) {
+    b.Run("Aeon/DateShort", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
-            _ = Parse("13:14:15")
+            _ = Parse("2020-8-5")
         }
     })
 
-    b.Run("Carbon/Time", func(b *testing.B) {
+    b.Run("iso8601/DateShort", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
-            _ = carbon.Parse("13:14:15")
+            _, _ = iso8601.ParseString("2020-8-5")
+        }
+    })
+
+    // DateTime
+    b.Run("Aeon/DateTime", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2020-08-05 03:14:05")
+        }
+    })
+
+    b.Run("Iso8601/DateTime", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _, _ = iso8601.ParseString("2020-08-05 03:14:05")
+        }
+    })
+
+    b.Run("Aeon/DateTimeShort", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2020-8-5 3:1:5")
+        }
+    })
+
+    b.Run("iso8601/DateTimeShort", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _, _ = iso8601.ParseString("2020-8-5 3:1:5")
+        }
+    })
+
+    b.Run("Aeon/DateTimeNanosecond", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2020-08-05 03:14:05.123456789")
+        }
+    })
+
+    b.Run("Iso8601/DateTimeNanosecond", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _, _ = iso8601.ParseString("2020-08-05 03:14:05.123456789")
+        }
+    })
+
+    // Short
+    b.Run("Aeon/Short", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("20200805131415")
+        }
+    })
+
+    b.Run("Iso8601/Short", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _, _ = iso8601.ParseString("20200805131415")
+        }
+    })
+
+    // ---
+
+    b.Run("Aeon/ISO8601Zulu", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2020-08-05T13:14:15Z")
+        }
+    })
+
+    b.Run("Iso8601/ISO8601Zulu", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _, _ = iso8601.ParseString("2020-08-05T13:14:15Z")
         }
     })
 
@@ -682,93 +736,9 @@ func Benchmark_Parse(b *testing.B) {
         }
     })
 
-    b.Run("Carbon/RFC3339", func(b *testing.B) {
+    b.Run("Iso8601/RFC3339", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
-            _ = carbon.Parse("2020-08-05T13:14:15+08:00")
-        }
-    })
-
-    b.Run("Aeon/ISO8601", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
-            _ = Parse("2020-08-05T13:14:15+08:00")
-        }
-    })
-
-    b.Run("Carbon/ISO8601", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
-            _ = carbon.Parse("2020-08-05T13:14:15+08:00")
-        }
-    })
-
-    b.Run("Aeon/Short", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
-            _ = Parse("20200805131415")
-        }
-    })
-
-    b.Run("Carbon/Short", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
-            _ = carbon.Parse("20200805131415")
-        }
-    })
-
-    b.Run("Aeon/Milli", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
-            _ = Parse("2020-08-05 13:14:15.123")
-        }
-    })
-
-    b.Run("Carbon/Milli", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
-            _ = carbon.Parse("2020-08-05 13:14:15.123")
-        }
-    })
-
-    b.Run("Aeon/Slash", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
-            _ = Parse("2020/08/05 13:14:15")
-        }
-    })
-
-    b.Run("Carbon/Slash", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
-            _ = carbon.Parse("2020/08/05 13:14:15")
-        }
-    })
-
-    b.Run("Aeon/Dot", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
-            _ = Parse("2020.08.05 13:14:15")
-        }
-    })
-
-    b.Run("Carbon/Dot", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
-            _ = carbon.Parse("2020.08.05 13:14:15")
-        }
-    })
-
-    b.Run("Aeon/SimpleT", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
-            _ = Parse("2020-08-05T13:14:15")
-        }
-    })
-
-    b.Run("Carbon/SimpleT", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
-            _ = carbon.Parse("2020-08-05T13:14:15")
-        }
-    })
-
-    b.Run("Aeon/RFC1123", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
-            _ = Parse("Mon, 04 Aug 2020 13:14:15 GMT")
-        }
-    })
-
-    b.Run("Carbon/RFC1123", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
-            _ = carbon.Parse("Mon, 04 Aug 2020 13:14:15 GMT")
+            _, _ = iso8601.ParseString("2020-08-05T13:14:15+08:00")
         }
     })
 }
