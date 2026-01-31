@@ -1,104 +1,104 @@
 package aeon
 
 import (
-    "testing"
-    "time"
+	"testing"
+	"time"
 )
 
 func TestAbsSeriesDevilMatrix(t *testing.T) {
-    // 基准时间: 2024-04-15 14:30:45 (21世纪, 2020年代, 2024年, 4月)
-    base := Parse("2024-04-15 14:30:45")
+	// 基准时间: 2024-04-15 14:30:45 (21世纪, 2020年代, 2024年, 4月)
+	base := Parse("2024-04-15 14:30:45")
 
-    t.Run("核心纵向级联 (Century -> Second)", func(t *testing.T) {
-        // 1. 全链路定位: StartCentury(0, 2, 5, 5, 20, 10, 30, 0)
-        // 2000(C) -> 2020(DateOnly) -> 2025(Y) -> 5月(M) -> 20日(DateOnly) -> 10:30 -> 45s(Second=0保持)
-        assert(t, base.StartCentury(0, 2, 5, 5, 20, 10, 30, 0), "2025-05-20 10:30:45", "全链路Start级联")
+	t.Run("核心纵向级联 (Century -> Second)", func(t *testing.T) {
+		// 1. 全链路定位: StartCentury(0, 2, 5, 5, 20, 10, 30, 0)
+		// 2000(C) -> 2020(DateOnly) -> 2025(Y) -> 5月(M) -> 20日(DateOnly) -> 10:30 -> 45s(Second=0保持)
+		assert(t, base.StartCentury(0, 2, 5, 5, 20, 10, 30, 0), "2025-05-20 10:30:00", "全链路Start级联")
 
-        // 2. 深度End级联: EndYear(5, 6, 20, 15)
-        // 2025年(Y) -> 6月(M) -> 20日(DateOnly) -> 15时(H) -> 置满后续
-        assert(t, base.EndYear(5, 6, 20, 15), "2025-06-20 15:59:59.999999999", "深度End级联")
-    })
+		// 2. 深度End级联: EndYear(5, 6, 20, 15)
+		// 2025年(Y) -> 6月(M) -> 20日(DateOnly) -> 15时(H) -> 置满后续
+		assert(t, base.EndYear(5, 6, 20, 15), "2025-06-20 15:59:59.999999999", "深度End级联")
+	})
 
-    t.Run("边界对齐与扩张 (n=0 语义)", func(t *testing.T) {
-        // 1. StartCentury 归零对齐
-        assert(t, base.StartYear(0), "2024-01-01 00:00:00", "StartYear(0) 归零")
-        assert(t, base.StartMonth(0), "2024-04-01 00:00:00", "StartMonth(0) 归零")
-        assert(t, base.StartDecade(1), "2010-01-01 00:00:00", "StartDecade(1) 锚定本世纪第1个年代")
+	t.Run("边界对齐与扩张 (n=0 语义)", func(t *testing.T) {
+		// 1. StartCentury 归零对齐
+		assert(t, base.StartYear(0), "2024-01-01 00:00:00", "StartYear(0) 归零")
+		assert(t, base.StartMonth(0), "2024-04-01 00:00:00", "StartMonth(0) 归零")
+		assert(t, base.StartDecade(1), "2010-01-01 00:00:00", "StartDecade(1) 锚定本世纪第1个年代")
 
-        // 2. EndCentury 置满扩张 (含 Decade/Century 修复验证)
-        assert(t, base.EndYear(0), "2024-12-31 23:59:59.999999999", "EndYear(0) 置满")
-        assert(t, base.EndDecade(0), "2029-12-31 23:59:59.999999999", "EndDecade(0) 扩张")
-        assert(t, base.EndDecade(1), "2019-12-31 23:59:59.999999999", "EndDecade(1) 锚定本世纪第1个年代末")
-        assert(t, base.EndCentury(0), "2099-12-31 23:59:59.999999999", "EndCentury(0) 扩张")
-        assert(t, base.EndQuarter(0), "2024-06-30 23:59:59.999999999", "EndQuarter(0) 扩张")
-    })
+		// 2. EndCentury 置满扩张 (含 Decade/Century 修复验证)
+		assert(t, base.EndYear(0), "2024-12-31 23:59:59.999999999", "EndYear(0) 置满")
+		assert(t, base.EndDecade(0), "2029-12-31 23:59:59.999999999", "EndDecade(0) 扩张")
+		assert(t, base.EndDecade(1), "2019-12-31 23:59:59.999999999", "EndDecade(1) 锚定本世纪第1个年代末")
+		assert(t, base.EndCentury(0), "2099-12-31 23:59:59.999999999", "EndCentury(0) 扩张")
+		assert(t, base.EndQuarter(0), "2024-06-30 23:59:59.999999999", "EndQuarter(0) 扩张")
+	})
 
-    t.Run("日期保护与自然溢出", func(t *testing.T) {
-        // 1. 月份保护: 1月31日定位到2月 -> 2月29日 (2024闰年)
-        refJan31 := Parse("2024-01-31 12:00:00")
-        assert(t, refJan31.StartMonth(2), "2024-02-01 00:00:00", "月份保护(StartCentury)")
-        assert(t, refJan31.EndMonth(2), "2024-02-29 23:59:59.999999999", "月份保护(EndCentury)")
+	t.Run("日期保护与自然溢出", func(t *testing.T) {
+		// 1. 月份保护: 1月31日定位到2月 -> 2月29日 (2024闰年)
+		refJan31 := Parse("2024-01-31 12:00:00")
+		assert(t, refJan31.StartMonth(2), "2024-02-01 00:00:00", "月份保护(StartCentury)")
+		assert(t, refJan31.EndMonth(2), "2024-02-29 23:59:59.999999999", "月份保护(EndCentury)")
 
-        // 2. 位移单位自然溢出: 4月31日 -> 5月1日
-        assert(t, base.StartDay(31), "2024-05-01 00:00:00", "Day自然溢出")
-        assert(t, base.StartHour(25), "2024-04-16 01:00:00", "Hour自然溢出")
-    })
+		// 2. 位移单位自然溢出: 4月31日 -> 5月1日
+		assert(t, base.StartDay(31), "2024-05-01 00:00:00", "Day自然溢出")
+		assert(t, base.StartHour(25), "2024-04-16 01:00:00", "Hour自然溢出")
+	})
 
-    t.Run("倒数绝对索引 (Negative Index)", func(t *testing.T) {
-        // 1. 月份倒数: -1 = 12月
-        assert(t, base.StartMonth(-1), "2024-12-01 00:00:00", "月份倒数")
-        // 2. 天数倒数: -1 = 本月最后一天
-        assert(t, base.StartDay(-1), "2024-04-30 00:00:00", "天数倒数")
-        // 3. 级联倒数: 年代末年末
-        assert(t, base.StartYear(-1, -1), "2029-12-01 00:00:00", "级联倒数")
-    })
+	t.Run("倒数绝对索引 (Negative Index)", func(t *testing.T) {
+		// 1. 月份倒数: -1 = 12月
+		assert(t, base.StartMonth(-1), "2024-12-01 00:00:00", "月份倒数")
+		// 2. 天数倒数: -1 = 本月最后一天
+		assert(t, base.StartDay(-1), "2024-04-30 00:00:00", "天数倒数")
+		// 3. 级联倒数: 年代末年末
+		assert(t, base.StartYear(-1, -1), "2029-12-01 00:00:00", "级联倒数")
+	})
 
-    t.Run("完整/ISO 周逻辑矩阵", func(t *testing.T) {
-        // 1. ISO 跨年周: 2026-01-01 属于 2026-W01 (周一为 2025-12-29)
-        refISO := Parse("2026-01-01 12:00:00")
-        assert(t, refISO.StartWeek(ISO, 1), "2025-12-29 00:00:00", "ISO W01 定位")
-        assert(t, refISO.StartWeek(ISO, 1, 2), "2025-12-30 00:00:00", "ISO W01 周二级联")
+	t.Run("完整/ISO 周逻辑矩阵", func(t *testing.T) {
+		// 1. ISO 跨年周: 2026-01-01 属于 2026-W01 (周一为 2025-12-29)
+		refISO := Parse("2026-01-01 12:00:00")
+		assert(t, refISO.StartWeek(ISO, 1), "2025-12-29 00:00:00", "ISO W01 定位")
+		assert(t, refISO.StartWeek(ISO, 1, 2), "2025-12-30 00:00:00", "ISO W01 周二级联")
 
-        // 2. 完整周 (Full): 2026 第一个周一 (1/5)
-        assert(t, refISO.WithWeekStarts(time.Monday).StartWeek(Full, 1), "2026-01-05 00:00:00", "完整周W01")
+		// 2. 完整周 (Full): 2026 第一个周一 (1/5)
+		assert(t, refISO.WithWeekStarts(time.Monday).StartWeek(Full, 1), "2026-01-05 00:00:00", "完整周W01")
 
-        // 3. Weekday 绝对定位
-        assert(t, base.WithWeekStarts(time.Monday).StartWeekday(1), "2024-04-15 00:00:00", "Weekday 1(Mon)")
-        assert(t, base.WithWeekStarts(time.Monday).StartWeekday(7), "2024-04-21 00:00:00", "Weekday 7(Sun)")
-    })
+		// 3. Weekday 绝对定位
+		assert(t, base.WithWeekStarts(time.Monday).StartWeekday(1), "2024-04-15 00:00:00", "Weekday 1(Mon)")
+		assert(t, base.WithWeekStarts(time.Monday).StartWeekday(7), "2024-04-21 00:00:00", "Weekday 7(Sun)")
+	})
 
-    t.Run("极端年份与安全边界", func(t *testing.T) {
-        // 1. 千年边界级联: Century(-1) -> y=2900 -> Decade(-1) -> y=2990 -> Year(-1) -> y=2999
-        assert(t, base.StartCentury(-1, -1, -1, -1, -1), "2999-12-31 00:00:00", "千年边界")
+	t.Run("极端年份与安全边界", func(t *testing.T) {
+		// 1. 千年边界级联: Century(-1) -> y=2900 -> Decade(-1) -> y=2990 -> Year(-1) -> y=2999
+		assert(t, base.StartCentury(-1, -1, -1, -1, -1), "2999-12-31 00:00:00", "千年边界")
 
-        // 2. 安全性: StartCentury(ISO) 无参数不崩溃
-        defer func() {
-            if r := recover(); r != nil {
-                t.Errorf("StartCentury(ISO) 崩溃: %v", r)
-            }
-        }()
-        base.StartCentury(ISO)
-    })
+		// 2. 安全性: StartCentury(ISO) 无参数不崩溃
+		defer func() {
+			if r := recover(); r != nil {
+				t.Errorf("StartCentury(ISO) 崩溃: %v", r)
+			}
+		}()
+		base.StartCentury(ISO)
+	})
 
-    t.Run("纳秒精度绝对定位 (Abs Nano)", func(t *testing.T) {
-        // 基准: 秒级为0
-        base := Parse("2024-01-01 00:00:00")
+	t.Run("纳秒精度绝对定位 (Abs Nano)", func(t *testing.T) {
+		// 基准: 秒级为0
+		base := Parse("2024-01-01 00:00:00")
 
-        // 1. Milli 定位 (1-based index)
-        // StartMilli(1) -> 第1个毫秒 -> 0ns
-        assert(t, base.StartMilli(1), "2024-01-01 00:00:00.001", "StartMilli(1) -> 0ms")
-        // StartMilli(501) -> 第501个毫秒 -> 500ms
-        assert(t, base.StartMilli(501), "2024-01-01 00:00:00.501", "StartMilli(501) -> 500ms")
+		// 1. Milli 定位 (1-based index)
+		// StartMilli(1) -> 第1个毫秒 -> 0ns
+		assert(t, base.StartMilli(1), "2024-01-01 00:00:00.001", "StartMilli(1) -> 0ms")
+		// StartMilli(501) -> 第501个毫秒 -> 500ms
+		assert(t, base.StartMilli(501), "2024-01-01 00:00:00.501", "StartMilli(501) -> 500ms")
 
-        // 2. EndMilli (1-based)
-        // EndMilli(1) -> 第1个毫秒的结束 -> 0ms + 999999ns
-        assert(t, base.EndMilli(1), "2024-01-01 00:00:00.001999999", "EndMilli(1) -> 0ms end")
+		// 2. EndMilli (1-based)
+		// EndMilli(1) -> 第1个毫秒的结束 -> 0ms + 999999ns
+		assert(t, base.EndMilli(1), "2024-01-01 00:00:00.001999999", "EndMilli(1) -> 0ms end")
 
-        // 3. 级联定位
-        // StartMilli(501, 101) -> 501ms + 101us (注意: Micro也会叠加，而不是像Month那样重置Day?)
-        // applyAbs 逻辑: ns 由 Milli, Micro, Nano 累加。
-        // Milli=501 -> ns=501*1e6. Micro=101 -> ns += 101*1e3.
-        // Total = 501,101,000 ns.
-        assert(t, base.StartMilli(501, 101), "2024-01-01 00:00:00.501101", "StartMilli(501, 101)")
-    })
+		// 3. 级联定位
+		// StartMilli(501, 101) -> 501ms + 101us (注意: Micro也会叠加，而不是像Month那样重置Day?)
+		// applyAbs 逻辑: ns 由 Milli, Micro, Nano 累加。
+		// Milli=501 -> ns=501*1e6. Micro=101 -> ns += 101*1e3.
+		// Total = 501,101,000 ns.
+		assert(t, base.StartMilli(501, 101), "2024-01-01 00:00:00.501101", "StartMilli(501, 101)")
+	})
 }

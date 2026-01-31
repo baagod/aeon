@@ -52,7 +52,6 @@ const (
     Mumbai     = "Asia/Mumbai"         // 孟买
     MexicoCity = "America/Mexico_City" // 墨西哥城
     NewYork    = "America/New_York"    // 纽约
-    NewYork1   = "America/New_York"    // 纽约
     LosAngeles = "America/Los_Angeles" // 洛杉矶
     Chicago    = "America/Chicago"     // 芝加哥
     SaoPaulo   = "America/Sao_Paulo"   // 圣保罗

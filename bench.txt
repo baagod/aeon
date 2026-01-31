@@ -1,0 +1,1041 @@
+package aeon
+
+import (
+    "testing"
+    "time"
+
+    "github.com/dromara/carbon/v2"
+)
+
+// --- 创建 ---
+
+func New(b *testing.B) {
+    b.Run("Aeon/New", func(b *testing.B) {
+        b.ResetTimer()
+        for i := 0; i < b.N; i++ {
+            _ = New(2020, 8, 5, 13, 14, 15, 999999999, UTC)
+        }
+    })
+
+    b.Run("Carbon/New", func(b *testing.B) {
+        b.ResetTimer()
+        for i := 0; i < b.N; i++ {
+            _ = carbon.CreateFromDateTimeNano(2020, 8, 5, 13, 14, 15, 999999999, UTC)
+        }
+    })
+
+    b.Run("Aeon/Now", func(b *testing.B) {
+        b.ResetTimer()
+        for i := 0; i < b.N; i++ {
+            _ = Now(time.UTC)
+        }
+    })
+
+    b.Run("Carbon/Now", func(b *testing.B) {
+        b.ResetTimer()
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Now(UTC)
+        }
+    })
+
+    b.Run("Aeon/Unix", func(b *testing.B) {
+        b.ResetTimer()
+        for i := 0; i < b.N; i++ {
+            _ = Unix(1596633255, time.UTC)
+        }
+    })
+
+    b.Run("Carbon/Unix", func(b *testing.B) {
+        b.ResetTimer()
+        for i := 0; i < b.N; i++ {
+            _ = carbon.CreateFromTimestamp(1596633255, UTC)
+        }
+    })
+
+    b.Run("Aeon/FromStd", func(b *testing.B) {
+        b.ResetTimer()
+        for i := 0; i < b.N; i++ {
+            _ = Aeon(time.Now().In(time.UTC))
+        }
+    })
+
+    b.Run("Carbon/FromStd", func(b *testing.B) {
+        b.ResetTimer()
+        for i := 0; i < b.N; i++ {
+            _ = carbon.CreateFromStdTime(time.Now(), UTC)
+        }
+    })
+
+    b.Run("Aeon/ToStd", func(b *testing.B) {
+        b.ResetTimer()
+        for i := 0; i < b.N; i++ {
+            _ = Now(time.UTC).Time()
+        }
+    })
+
+    b.Run("Carbon/ToStd", func(b *testing.B) {
+        b.ResetTimer()
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Now(UTC).StdTime()
+        }
+    })
+}
+
+// --- 偏移 (触发溢出) ---
+
+func Add_Overflow(b *testing.B) {
+    t := New(2025, 1, 31, 0, 0, 0)
+    c := carbon.CreateFromDate(2025, 1, 31)
+
+    b.Run("Aeon/Century", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.ByCentury(Overflow, 1)
+        }
+    })
+
+    b.Run("Carbon/Century", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.AddCenturies(1)
+        }
+    })
+
+    b.Run("Aeon/Decade", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.ByDecade(Overflow, 1)
+        }
+    })
+
+    b.Run("Carbon/Decade", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.AddDecades(1)
+        }
+    })
+
+    b.Run("Aeon/Year", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.ByYear(Overflow, 1)
+        }
+    })
+
+    b.Run("Carbon/Year", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.AddYears(1)
+        }
+    })
+
+    b.Run("Aeon/Month", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.ByMonth(Overflow, 1)
+        }
+    })
+
+    b.Run("Carbon/Month", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.AddMonths(1)
+        }
+    })
+
+    b.Run("Aeon/Week", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.ByWeek(1)
+        }
+    })
+
+    b.Run("Carbon/Week", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.AddWeeks(1)
+        }
+    })
+
+    b.Run("Aeon/Day", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.ByDay(1)
+        }
+    })
+
+    b.Run("Carbon/Day", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.AddDays(1)
+        }
+    })
+
+    b.Run("Aeon/Hour", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.ByHour(1)
+        }
+    })
+
+    b.Run("Carbon/Hour", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.AddHours(1)
+        }
+    })
+
+    b.Run("Aeon/Minute", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.ByMinute(1)
+        }
+    })
+
+    b.Run("Carbon/Minute", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.AddMinutes(1)
+        }
+    })
+
+    b.Run("Aeon/Second", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.BySecond(1)
+        }
+    })
+
+    b.Run("Carbon/Second", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.AddSeconds(1)
+        }
+    })
+
+    b.Run("Aeon/Milli", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.ByMilli(1)
+        }
+    })
+
+    b.Run("Carbon/Milli", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.AddMilliseconds(1)
+        }
+    })
+
+    b.Run("Aeon/Micro", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.ByMicro(1)
+        }
+    })
+
+    b.Run("Carbon/Micro", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.AddMicroseconds(1)
+        }
+    })
+
+    b.Run("Aeon/Nano", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.ByNano(1)
+        }
+    })
+
+    b.Run("Carbon/Nano", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.AddNanoseconds(1)
+        }
+    })
+}
+
+// --- 偏移 (保护溢出) ---
+
+func Add(b *testing.B) {
+    t := New(2025, 1, 31, 0, 0, 0)
+    c := carbon.CreateFromDate(2025, 1, 31)
+
+    b.Run("Aeon/Century", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.ByCentury(1)
+        }
+    })
+
+    b.Run("Carbon/Century", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.AddCenturyNoOverflow()
+        }
+    })
+
+    b.Run("Aeon/Decade", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.ByDecade(1)
+        }
+    })
+
+    b.Run("Carbon/Decade", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.AddDecadesNoOverflow(1)
+        }
+    })
+
+    b.Run("Aeon/Year", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.ByYear(1)
+        }
+    })
+
+    b.Run("Carbon/Year", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.AddYearNoOverflow()
+        }
+    })
+
+    b.Run("Aeon/Month", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.ByMonth(1)
+        }
+    })
+
+    b.Run("Carbon/Month", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.AddMonthNoOverflow()
+        }
+    })
+}
+
+// --- 设置 (触发溢出) ---
+
+func Set_Overflow(b *testing.B) {
+    t := New(2025, 1, 31, 0, 0, 0)
+    c := carbon.CreateFromDate(2025, 1, 31)
+
+    b.Run("Aeon/Year", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.GoYear(Overflow, 2024)
+        }
+    })
+
+    b.Run("Carbon/Year", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.SetYear(2024)
+        }
+    })
+
+    b.Run("Aeon/Month", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.GoMonth(Overflow, 2)
+        }
+    })
+
+    b.Run("Carbon/Month", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.SetMonth(2)
+        }
+    })
+
+    b.Run("Aeon/Day", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.GoDay(15)
+        }
+    })
+
+    b.Run("Carbon/Day", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.SetDay(15)
+        }
+    })
+
+    b.Run("Aeon/Hour", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.GoHour(14)
+        }
+    })
+
+    b.Run("Carbon/Hour", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.SetHour(14)
+        }
+    })
+
+    b.Run("Aeon/Minute", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.GoMinute(30)
+        }
+    })
+
+    b.Run("Carbon/Minute", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.SetMinute(30)
+        }
+    })
+
+    b.Run("Aeon/Second", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.GoSecond(45)
+        }
+    })
+
+    b.Run("Carbon/Second", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.SetSecond(45)
+        }
+    })
+
+    b.Run("Aeon/Milli", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.GoMilli(123)
+        }
+    })
+
+    b.Run("Carbon/Milli", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.SetMillisecond(123)
+        }
+    })
+
+    b.Run("Aeon/Micro", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.GoMicro(123456)
+        }
+    })
+
+    b.Run("Carbon/Micro", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.SetMicrosecond(123456)
+        }
+    })
+
+    b.Run("Aeon/Nano", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.GoNano(123456789)
+        }
+    })
+
+    b.Run("Carbon/Nano", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.SetNanosecond(123456789)
+        }
+    })
+}
+
+// --- 设置 (保护溢出) ---
+
+func Set(b *testing.B) {
+    t := New(2025, 1, 31, 0, 0, 0)
+    c := carbon.CreateFromDate(2025, 1, 31)
+
+    b.Run("Aeon/Year", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.GoYear(2024)
+        }
+    })
+
+    b.Run("Carbon/Year", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.SetYearNoOverflow(2024)
+        }
+    })
+
+    b.Run("Aeon/Month", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.GoMonth(2)
+        }
+    })
+
+    b.Run("Carbon/Month", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.SetMonthNoOverflow(2)
+        }
+    })
+}
+
+// --- Start/End ---
+
+func Start(b *testing.B) {
+    t := New(2025, 6, 15, 12, 30, 45, 0, UTC)
+    c := carbon.CreateFromDateTimeNano(2025, 6, 15, 12, 30, 45, 0, UTC)
+
+    b.Run("Aeon/Century", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.StartCentury()
+        }
+    })
+
+    b.Run("Carbon/Century", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.StartOfCentury()
+        }
+    })
+
+    b.Run("Aeon/Decade", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.StartDecade()
+        }
+    })
+
+    b.Run("Carbon/Decade", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.StartOfDecade()
+        }
+    })
+
+    b.Run("Aeon/Year", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.StartYear()
+        }
+    })
+
+    b.Run("Carbon/Year", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.StartOfYear()
+        }
+    })
+
+    b.Run("Aeon/Month", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.StartMonth()
+        }
+    })
+
+    b.Run("Carbon/Month", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.StartOfMonth()
+        }
+    })
+
+    b.Run("Aeon/Day", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.StartDay()
+        }
+    })
+
+    b.Run("Carbon/Day", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.StartOfDay()
+        }
+    })
+
+    b.Run("Aeon/Hour", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.StartHour()
+        }
+    })
+
+    b.Run("Carbon/Hour", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.StartOfHour()
+        }
+    })
+
+    b.Run("Aeon/Minute", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.StartMinute()
+        }
+    })
+
+    b.Run("Carbon/Minute", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.StartOfMinute()
+        }
+    })
+
+    b.Run("Aeon/Second", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.StartSecond()
+        }
+    })
+
+    b.Run("Carbon/Second", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.StartOfSecond()
+        }
+    })
+}
+
+func End(b *testing.B) {
+    t := New(2025, 6, 15, 12, 30, 45, 0, UTC)
+    c := carbon.CreateFromDateTimeNano(2025, 6, 15, 12, 30, 45, 0, UTC)
+
+    b.Run("Aeon/Century", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.EndCentury()
+        }
+    })
+
+    b.Run("Carbon/Century", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.EndOfCentury()
+        }
+    })
+
+    b.Run("Aeon/Decade", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.EndDecade()
+        }
+    })
+
+    b.Run("Carbon/Decade", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.EndOfDecade()
+        }
+    })
+
+    b.Run("Aeon/Year", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.EndYear()
+        }
+    })
+
+    b.Run("Carbon/Year", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.EndOfYear()
+        }
+    })
+
+    b.Run("Aeon/Month", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.EndMonth()
+        }
+    })
+
+    b.Run("Carbon/Month", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.EndOfMonth()
+        }
+    })
+
+    b.Run("Aeon/Day", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.EndDay()
+        }
+    })
+
+    b.Run("Carbon/Day", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.EndOfDay()
+        }
+    })
+
+    b.Run("Aeon/Hour", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.EndHour()
+        }
+    })
+
+    b.Run("Carbon/Hour", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.EndOfHour()
+        }
+    })
+
+    b.Run("Aeon/Minute", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.EndMinute()
+        }
+    })
+
+    b.Run("Carbon/Minute", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.EndOfMinute()
+        }
+    })
+
+    b.Run("Aeon/Second", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = t.EndSecond()
+        }
+    })
+
+    b.Run("Carbon/Second", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = c.EndOfSecond()
+        }
+    })
+}
+
+// --- Parse ---
+
+func Parse(b *testing.B) {
+    // ========== Date ==========
+    b.Run("Date/Std/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2024-05-20")
+        }
+    })
+    b.Run("Date/Std/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("2024-05-20")
+        }
+    })
+
+    b.Run("Date/Compact/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("20240520")
+        }
+    })
+    b.Run("Date/Compact/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("20240520")
+        }
+    })
+
+    // ========== DateTime (T 分隔符) ==========
+    b.Run("DateTime/T/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2024-05-20T15:04:05")
+        }
+    })
+    b.Run("DateTime/T/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("2024-05-20T15:04:05")
+        }
+    })
+
+    b.Run("DateTime/Space/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2024-05-20 15:04:05")
+        }
+    })
+    b.Run("DateTime/Space/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("2024-05-20 15:04:05")
+        }
+    })
+
+    b.Run("DateTime/Compact/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("20240520T150405")
+        }
+    })
+    b.Run("DateTime/Compact/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("20240520T150405")
+        }
+    })
+
+    // ========== Zulu ==========
+    b.Run("Zulu/T/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2024-05-20T15:04:05Z")
+        }
+    })
+    b.Run("Zulu/T/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("2024-05-20T15:04:05Z")
+        }
+    })
+
+    b.Run("Zulu/Space/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2024-05-20 15:04:05Z")
+        }
+    })
+    b.Run("Zulu/Space/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("2024-05-20 15:04:05Z")
+        }
+    })
+
+    b.Run("Zulu/Compact/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("20240520T150405Z")
+        }
+    })
+    b.Run("Zulu/Compact/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("20240520T150405Z")
+        }
+    })
+
+    // ========== Offset (HH:MM) ==========
+    b.Run("Offset/T/Colon/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2024-05-20T15:04:05+08:00")
+        }
+    })
+    b.Run("Offset/T/Colon/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("2024-05-20T15:04:05+08:00")
+        }
+    })
+
+    b.Run("Offset/Space/Colon/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2024-05-20 15:04:05+08:00")
+        }
+    })
+    b.Run("Offset/Space/Colon/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("2024-05-20 15:04:05+08:00")
+        }
+    })
+
+    b.Run("Offset/Compact/Colon/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("20240520T150405+0800")
+        }
+    })
+    b.Run("Offset/Compact/Colon/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("20240520T150405+0800")
+        }
+    })
+
+    // ========== Offset (HH) ==========
+    b.Run("Offset/T/Short/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2024-05-20T15:04:05+08")
+        }
+    })
+    b.Run("Offset/T/Short/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("2024-05-20T15:04:05+08")
+        }
+    })
+
+    b.Run("Offset/Space/Short/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2024-05-20 15:04:05+08")
+        }
+    })
+    b.Run("Offset/Space/Short/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("2024-05-20 15:04:05+08")
+        }
+    })
+
+    // ========== Nano (可变长度) ==========
+    b.Run("Nano/T/Full/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2024-05-20T15:04:05.999999999")
+        }
+    })
+    b.Run("Nano/T/Full/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("2024-05-20T15:04:05.999999999")
+        }
+    })
+
+    b.Run("Nano/T/Milli/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2024-05-20T15:04:05.123")
+        }
+    })
+    b.Run("Nano/T/Milli/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("2024-05-20T15:04:05.123")
+        }
+    })
+
+    b.Run("Nano/T/Micro/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2024-05-20T15:04:05.123456")
+        }
+    })
+    b.Run("Nano/T/Micro/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("2024-05-20T15:04:05.123456")
+        }
+    })
+
+    b.Run("Nano/Space/Full/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2024-05-20 15:04:05.999999999")
+        }
+    })
+    b.Run("Nano/Space/Full/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("2024-05-20 15:04:05.999999999")
+        }
+    })
+
+    b.Run("Nano/Space/Milli/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2024-05-20 15:04:05.123")
+        }
+    })
+    b.Run("Nano/Space/Milli/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("2024-05-20 15:04:05.123")
+        }
+    })
+
+    b.Run("Nano/Compact/Full/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("20240520T150405.999999999")
+        }
+    })
+    b.Run("Nano/Compact/Full/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("20240520T150405.999999999")
+        }
+    })
+
+    // ========== Nano + Zulu ==========
+    b.Run("Nano/Zulu/T/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2024-05-20T15:04:05.999999999Z")
+        }
+    })
+    b.Run("Nano/Zulu/T/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("2024-05-20T15:04:05.999999999Z")
+        }
+    })
+
+    // ========== Nano + Offset ==========
+    b.Run("Nano/Offset/T/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("2024-05-20T15:04:05.999999999+08:00")
+        }
+    })
+    b.Run("Nano/Offset/T/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("2024-05-20T15:04:05.999999999+08:00")
+        }
+    })
+
+    b.Run("Nano/Offset/Compact/Aeon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = Parse("20240520T150405.999999999+0800")
+        }
+    })
+    b.Run("Nano/Offset/Compact/Carbon", func(b *testing.B) {
+        for i := 0; i < b.N; i++ {
+            _ = carbon.Parse("20240520T150405.999999999+0800")
+        }
+    })
+}
+
+
+goos: windows
+goarch: amd64
+pkg: github.com/baagod/aeon
+cpu: Intel(R) Core(TM) i7-8700K CPU @ 3.70GHz
+New/Aeon/New-12    	63821638	        18.61 ns/op	       0 B/op	       0 allocs/op
+New/Carbon/New-12  	  823462	      1376 ns/op	    1600 B/op	      13 allocs/op
+New/Aeon/Now-12    	152071922	         7.781 ns/op	       0 B/op	       0 allocs/op
+New/Carbon/Now-12  	  808455	      1384 ns/op	    1600 B/op	      13 allocs/op
+New/Aeon/Unix-12   	331322664	         3.605 ns/op	       0 B/op	       0 allocs/op
+New/Carbon/Unix-12 	  863184	      1380 ns/op	    1600 B/op	      13 allocs/op
+New/Aeon/FromStd-12         	237038487	         5.015 ns/op	       0 B/op	       0 allocs/op
+New/Carbon/FromStd-12       	  864783	      1619 ns/op	    1600 B/op	      13 allocs/op
+New/Aeon/ToStd-12           	152190361	         7.873 ns/op	       0 B/op	       0 allocs/op
+New/Carbon/ToStd-12         	  828322	      1411 ns/op	    1600 B/op	      13 allocs/op
+Add_Overflow/Aeon/Century-12         	20795965	        58.13 ns/op	       0 B/op	       0 allocs/op
+Add_Overflow/Carbon/Century-12       	11099743	       109.9 ns/op	     128 B/op	       2 allocs/op
+Add_Overflow/Aeon/Decade-12          	20955573	        57.84 ns/op	       0 B/op	       0 allocs/op
+Add_Overflow/Carbon/Decade-12        	10679282	       110.0 ns/op	     128 B/op	       2 allocs/op
+Add_Overflow/Aeon/Year-12            	20843283	        58.31 ns/op	       0 B/op	       0 allocs/op
+Add_Overflow/Carbon/Year-12          	10526287	       109.4 ns/op	     128 B/op	       2 allocs/op
+Add_Overflow/Aeon/Month-12           	20628906	        58.44 ns/op	       0 B/op	       0 allocs/op
+Add_Overflow/Carbon/Month-12         	11182773	       107.9 ns/op	     128 B/op	       2 allocs/op
+Add_Overflow/Aeon/Week-12            	21108847	        64.54 ns/op	       0 B/op	       0 allocs/op
+Add_Overflow/Carbon/Week-12          	11191753	       111.0 ns/op	     128 B/op	       2 allocs/op
+Add_Overflow/Aeon/Day-12             	21350527	        57.63 ns/op	       0 B/op	       0 allocs/op
+Add_Overflow/Carbon/Day-12           	10533189	       105.9 ns/op	     128 B/op	       2 allocs/op
+Add_Overflow/Aeon/Hour-12            	21366226	        55.92 ns/op	       0 B/op	       0 allocs/op
+Add_Overflow/Carbon/Hour-12          	15648655	        78.83 ns/op	     128 B/op	       2 allocs/op
+Add_Overflow/Aeon/Minute-12          	21211756	        56.04 ns/op	       0 B/op	       0 allocs/op
+Add_Overflow/Carbon/Minute-12        	13875799	        75.32 ns/op	     128 B/op	       2 allocs/op
+Add_Overflow/Aeon/Second-12          	21299631	        56.12 ns/op	       0 B/op	       0 allocs/op
+Add_Overflow/Carbon/Second-12        	13549078	        78.50 ns/op	     128 B/op	       2 allocs/op
+Add_Overflow/Aeon/Milli-12           	21357253	        55.72 ns/op	       0 B/op	       0 allocs/op
+Add_Overflow/Carbon/Milli-12         	15721971	        75.34 ns/op	     128 B/op	       2 allocs/op
+Add_Overflow/Aeon/Micro-12           	20974546	        67.30 ns/op	       0 B/op	       0 allocs/op
+Add_Overflow/Carbon/Micro-12         	15375940	        78.19 ns/op	     128 B/op	       2 allocs/op
+Add_Overflow/Aeon/Nano-12            	19602750	        55.61 ns/op	       0 B/op	       0 allocs/op
+Add_Overflow/Carbon/Nano-12          	15561356	        75.97 ns/op	     128 B/op	       2 allocs/op
+Add/Aeon/Century-12                  	21413581	        55.66 ns/op	       0 B/op	       0 allocs/op
+Add/Carbon/Century-12                	 8383036	       142.0 ns/op	     128 B/op	       2 allocs/op
+Add/Aeon/Decade-12                   	21047018	        56.42 ns/op	       0 B/op	       0 allocs/op
+Add/Carbon/Decade-12                 	 8391994	       139.5 ns/op	     128 B/op	       2 allocs/op
+Add/Aeon/Year-12                     	21597378	        55.94 ns/op	       0 B/op	       0 allocs/op
+Add/Carbon/Year-12                   	 8111544	       142.1 ns/op	     128 B/op	       2 allocs/op
+Add/Aeon/Month-12                    	20642142	        56.69 ns/op	       0 B/op	       0 allocs/op
+Add/Carbon/Month-12                  	 7959132	       144.0 ns/op	     128 B/op	       2 allocs/op
+Set_Overflow/Aeon/Year-12            	20669413	        66.51 ns/op	       0 B/op	       0 allocs/op
+Set_Overflow/Carbon/Year-12          	31095735	        38.65 ns/op	       0 B/op	       0 allocs/op
+Set_Overflow/Aeon/Month-12           	20746206	        59.56 ns/op	       0 B/op	       0 allocs/op
+Set_Overflow/Carbon/Month-12         	30843412	        39.06 ns/op	       0 B/op	       0 allocs/op
+Set_Overflow/Aeon/Day-12             	21336216	        57.32 ns/op	       0 B/op	       0 allocs/op
+Set_Overflow/Carbon/Day-12           	31846034	        38.90 ns/op	       0 B/op	       0 allocs/op
+Set_Overflow/Aeon/Hour-12            	19592348	        57.89 ns/op	       0 B/op	       0 allocs/op
+Set_Overflow/Carbon/Hour-12          	31012800	        38.64 ns/op	       0 B/op	       0 allocs/op
+Set_Overflow/Aeon/Minute-12          	21394072	        56.55 ns/op	       0 B/op	       0 allocs/op
+Set_Overflow/Carbon/Minute-12        	29993625	        39.65 ns/op	       0 B/op	       0 allocs/op
+Set_Overflow/Aeon/Second-12          	21474088	        56.85 ns/op	       0 B/op	       0 allocs/op
+Set_Overflow/Carbon/Second-12        	31555861	        38.98 ns/op	       0 B/op	       0 allocs/op
+Set_Overflow/Aeon/Milli-12           	19794859	        70.03 ns/op	       0 B/op	       0 allocs/op
+Set_Overflow/Carbon/Milli-12         	34866996	        35.00 ns/op	       0 B/op	       0 allocs/op
+Set_Overflow/Aeon/Micro-12           	19296946	        61.40 ns/op	       0 B/op	       0 allocs/op
+Set_Overflow/Carbon/Micro-12         	34998584	        34.52 ns/op	       0 B/op	       0 allocs/op
+Set_Overflow/Aeon/Nano-12            	19947637	        61.25 ns/op	       0 B/op	       0 allocs/op
+Set_Overflow/Carbon/Nano-12          	35661006	        34.37 ns/op	       0 B/op	       0 allocs/op
+Set/Aeon/Year-12                     	21155737	        58.73 ns/op	       0 B/op	       0 allocs/op
+Set/Carbon/Year-12                   	 7493344	       156.0 ns/op	     128 B/op	       2 allocs/op
+Set/Aeon/Month-12                    	21053074	        57.74 ns/op	       0 B/op	       0 allocs/op
+Set/Carbon/Month-12                  	 7418506	       159.0 ns/op	     128 B/op	       2 allocs/op
+Start/Aeon/Century-12                	21540543	        55.61 ns/op	       0 B/op	       0 allocs/op
+Start/Carbon/Century-12              	 1086165	      1271 ns/op	    1440 B/op	       7 allocs/op
+Start/Aeon/Decade-12                 	21561211	        56.43 ns/op	       0 B/op	       0 allocs/op
+Start/Carbon/Decade-12               	 1000000	      1098 ns/op	    1440 B/op	       7 allocs/op
+Start/Aeon/Year-12                   	21194036	        57.23 ns/op	       0 B/op	       0 allocs/op
+Start/Carbon/Year-12                 	 1000000	      1090 ns/op	    1440 B/op	       7 allocs/op
+Start/Aeon/Month-12                  	19898780	        56.30 ns/op	       0 B/op	       0 allocs/op
+Start/Carbon/Month-12                	 1000000	      1087 ns/op	    1440 B/op	       7 allocs/op
+Start/Aeon/Day-12                    	21376846	        56.20 ns/op	       0 B/op	       0 allocs/op
+Start/Carbon/Day-12                  	  972280	      1070 ns/op	    1440 B/op	       7 allocs/op
+Start/Aeon/Hour-12                   	21487969	        55.83 ns/op	       0 B/op	       0 allocs/op
+Start/Carbon/Hour-12                 	 1000000	      1134 ns/op	    1440 B/op	       7 allocs/op
+Start/Aeon/Minute-12                 	21596095	        55.82 ns/op	       0 B/op	       0 allocs/op
+Start/Carbon/Minute-12               	 1000000	      1321 ns/op	    1440 B/op	       7 allocs/op
+Start/Aeon/Second-12                 	21647989	        55.94 ns/op	       0 B/op	       0 allocs/op
+Start/Carbon/Second-12               	 1000000	      1118 ns/op	    1440 B/op	       7 allocs/op
+End/Aeon/Century-12                  	21089556	        57.70 ns/op	       0 B/op	       0 allocs/op
+End/Carbon/Century-12                	  953613	      1077 ns/op	    1440 B/op	       7 allocs/op
+End/Aeon/Decade-12                   	19414270	        56.44 ns/op	       0 B/op	       0 allocs/op
+End/Carbon/Decade-12                 	 1000000	      1086 ns/op	    1440 B/op	       7 allocs/op
+End/Aeon/Year-12                     	21492357	        56.31 ns/op	       0 B/op	       0 allocs/op
+End/Carbon/Year-12                   	 1102746	      1060 ns/op	    1440 B/op	       7 allocs/op
+End/Aeon/Month-12                    	18296252	        58.03 ns/op	       0 B/op	       0 allocs/op
+End/Carbon/Month-12                  	 1000000	      1081 ns/op	    1440 B/op	       7 allocs/op
+End/Aeon/Day-12                      	21577688	        56.48 ns/op	       0 B/op	       0 allocs/op
+End/Carbon/Day-12                    	 1000000	      1457 ns/op	    1440 B/op	       7 allocs/op
+End/Aeon/Hour-12                     	21678218	        55.30 ns/op	       0 B/op	       0 allocs/op
+End/Carbon/Hour-12                   	 1000000	      1107 ns/op	    1440 B/op	       7 allocs/op
+End/Aeon/Minute-12                   	21310525	        55.43 ns/op	       0 B/op	       0 allocs/op
+End/Carbon/Minute-12                 	 1000000	      1095 ns/op	    1440 B/op	       7 allocs/op
+End/Aeon/Second-12                   	20335087	        57.07 ns/op	       0 B/op	       0 allocs/op
+End/Carbon/Second-12                 	 1000000	      1092 ns/op	    1440 B/op	       7 allocs/op
+Parse/Date/Std/Aeon-12               	60914013	        19.66 ns/op	       0 B/op	       0 allocs/op
+Parse/Date/Std/Carbon-12             	  653170	      1794 ns/op	    1697 B/op	      15 allocs/op
+Parse/Date/Compact/Aeon-12           	51214420	        23.31 ns/op	       0 B/op	       0 allocs/op
+Parse/Date/Compact/Carbon-12         	  268188	      4561 ns/op	    3922 B/op	      85 allocs/op
+Parse/DateTime/T/Aeon-12             	54776011	        22.07 ns/op	       0 B/op	       0 allocs/op
+Parse/DateTime/T/Carbon-12           	  389836	      3779 ns/op	    2577 B/op	      36 allocs/op
+Parse/DateTime/Space/Aeon-12         	51136726	        22.26 ns/op	       0 B/op	       0 allocs/op
+Parse/DateTime/Space/Carbon-12       	  744992	      1640 ns/op	    1600 B/op	      13 allocs/op
+Parse/DateTime/Compact/Aeon-12       	46202892	        25.92 ns/op	       0 B/op	       0 allocs/op
+Parse/DateTime/Compact/Carbon-12     	   72974	     17153 ns/op	   14409 B/op	     370 allocs/op
+Parse/Zulu/T/Aeon-12                 	56700591	        21.77 ns/op	       0 B/op	       0 allocs/op
+Parse/Zulu/T/Carbon-12               	  493021	      2449 ns/op	    2265 B/op	      30 allocs/op
+Parse/Zulu/Space/Aeon-12             	57876231	        20.75 ns/op	       0 B/op	       0 allocs/op
+Parse/Zulu/Space/Carbon-12           	   56112	     20972 ns/op	   15457 B/op	     383 allocs/op
+Parse/Zulu/Compact/Aeon-12           	47583170	        25.01 ns/op	       0 B/op	       0 allocs/op
+Parse/Zulu/Compact/Carbon-12         	   66686	     17423 ns/op	   14457 B/op	     370 allocs/op
+Parse/Offset/T/Colon/Aeon-12         	32125330	        47.83 ns/op	       0 B/op	       0 allocs/op
+Parse/Offset/T/Colon/Carbon-12       	  465928	      2444 ns/op	    2321 B/op	      30 allocs/op
+Parse/Offset/Space/Colon/Aeon-12     	32613924	        36.87 ns/op	       0 B/op	       0 allocs/op
+Parse/Offset/Space/Colon/Carbon-12   	  106971	     10992 ns/op	    8933 B/op	     188 allocs/op
+Parse/Offset/Compact/Colon/Aeon-12   	29138094	        41.35 ns/op	       0 B/op	       0 allocs/op
+Parse/Offset/Compact/Colon/Carbon-12 	   68958	     17766 ns/op	   15657 B/op	     370 allocs/op
+Parse/Offset/T/Short/Aeon-12         	31599735	        37.39 ns/op	       0 B/op	       0 allocs/op
+Parse/Offset/T/Short/Carbon-12       	   66295	     17961 ns/op	   13720 B/op	     321 allocs/op
+Parse/Offset/Space/Short/Aeon-12     	33014013	        37.00 ns/op	       0 B/op	       0 allocs/op
+Parse/Offset/Space/Short/Carbon-12   	  118243	     10383 ns/op	    8229 B/op	     183 allocs/op
+Parse/Nano/T/Full/Aeon-12            	27991406	        42.65 ns/op	       0 B/op	       0 allocs/op
+Parse/Nano/T/Full/Carbon-12          	  357469	      3430 ns/op	    2705 B/op	      36 allocs/op
+Parse/Nano/T/Milli/Aeon-12           	41147182	        31.08 ns/op	       0 B/op	       0 allocs/op
+Parse/Nano/T/Milli/Carbon-12         	  354896	      3365 ns/op	    2577 B/op	      36 allocs/op
+Parse/Nano/T/Micro/Aeon-12           	28570747	        40.12 ns/op	       0 B/op	       0 allocs/op
+Parse/Nano/T/Micro/Carbon-12         	  358669	      3376 ns/op	    2657 B/op	      36 allocs/op
+Parse/Nano/Space/Full/Aeon-12        	27819894	        42.71 ns/op	       0 B/op	       0 allocs/op
+Parse/Nano/Space/Full/Carbon-12      	  704221	      1689 ns/op	    1600 B/op	      13 allocs/op
+Parse/Nano/Space/Milli/Aeon-12       	46818122	        25.90 ns/op	       0 B/op	       0 allocs/op
+Parse/Nano/Space/Milli/Carbon-12     	  675679	      1652 ns/op	    1601 B/op	      13 allocs/op
+Parse/Nano/Compact/Full/Aeon-12      	36927052	        32.46 ns/op	       0 B/op	       0 allocs/op
+Parse/Nano/Compact/Full/Carbon-12    	   66376	     18043 ns/op	   17540 B/op	     370 allocs/op
+Parse/Nano/Zulu/T/Aeon-12            	28801635	        41.66 ns/op	       0 B/op	       0 allocs/op
+Parse/Nano/Zulu/T/Carbon-12          	  490027	      2470 ns/op	    2369 B/op	      30 allocs/op
+Parse/Nano/Offset/T/Aeon-12          	19376214	        78.79 ns/op	       0 B/op	       0 allocs/op
+Parse/Nano/Offset/T/Carbon-12        	  464499	      2559 ns/op	    2513 B/op	      30 allocs/op
+Parse/Nano/Offset/Compact/Aeon-12    	24846829	        47.64 ns/op	       0 B/op	       0 allocs/op
+Parse/Nano/Offset/Compact/Carbon-12  	   57475	     18254 ns/op	   18252 B/op	     370 allocs/op
+Func/isDigit41-12                    	37049386	        32.34 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/baagod/aeon	182.689s
