@@ -164,12 +164,13 @@ func applyAbs(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w, sw time.
             m -= (m - 1) % 3
         }
     case Month:
-        if p == Quarter {
-            // 季度内月份对齐：先找回季度起始月 (1, 4, 7, 10)
-            if q := ((m-1)/3)*3 + 1; n > 0 {
-                m = q + n - 1
-            } else if n < 0 {
-                m = q + 3 + n
+        if p == Quarter { // 季内月
+            if n != 0 {
+                if m -= (m - 1) % 3; n > 0 {
+                    m += n - 1
+                } else {
+                    m += 3 + n
+                }
             }
         } else {
             if n > 0 {
@@ -183,7 +184,28 @@ func applyAbs(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w, sw time.
             break
         }
 
-        if c.fullWeek {
+        if c.qtrWeek { // 季内周
+            if n == 0 { // se 模式：回到周首
+                d -= int(w-sw+7) % 7
+                break
+            }
+
+            if m -= (m - 1) % 3; n > 0 { // 回到季首
+                d = 1 + (n-1)*7 // 正数从季初开始数周
+            } else {
+                m += 2                         // 定位到月末
+                d = DaysIn(y, m) + (n+1)*7 - 6 // 从季末开始数周
+                if !c.ordWeek {                // 如果是日历周 (自然周)
+                    // 从序数锚点修正到自然周首 (sw)
+                    d += (int(sw-weekday(y, m, d+6)-1) + 7) % 7
+                }
+            }
+
+            if !c.ordWeek && c.goMode {
+                // 统一对齐公式：不论正反，d 此时均在寻址周的起始日。
+                d += (int(w-weekday(y, m, d)) + 7) % 7
+            }
+        } else if c.fullWeek {
             // 完整周：从本月第 1 个周一开始
             if n > 0 {
                 // 正向：找到第一个 sw（周一）再加偏移
@@ -200,15 +222,11 @@ func applyAbs(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w, sw time.
                 d += int(w-sw+7) % 7
             }
         } else if c.ordWeek {
-            // 序数周：从本月 1 日开始以每 7 天为周期
+            // 序数周：从本月 1 日开始数周
             if n == 0 {
-                d = 1 + (d-1)/7*7
-            } else {
-                if d = 1 + (n-1)*7; n < 0 {
-                    if d = DaysIn(y, m) + (n+1)*7; !c.goMode {
-                        d -= 6
-                    }
-                }
+                d -= int(w-sw+7) % 7 // se 模式：回到周首
+            } else if d = 1 + (n-1)*7; n < 0 {
+                d = DaysIn(y, m) + (n+1)*7 - 6
             }
         } else if c.isoWeek {
             // ISO 年周：遵循 ISO 8601
@@ -237,7 +255,7 @@ func applyAbs(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w, sw time.
                 d += (n + 1) * 7
             }
             // ISO 周：Go 模式不恢复周内偏移，直接返回周首
-        } else { // 日历周 (默认，已实现)
+        } else { // 日历周 (默认)
             if n > 0 {
                 d = 1 + (n-1)*7
             } else if n < 0 {
@@ -309,7 +327,7 @@ func applyAbs(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w, sw time.
         y, m = addMonth(y, m, 0)
     }
 
-    y, m, d, w = final(c, u, y, m, d)
+    y, m, d, w = final(c, u, n, y, m, d)
     return y, m, d, h, mm, sec, ns, w
 }
 
@@ -355,7 +373,7 @@ func applyRel(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w, sw time.
         ns += n * u.factor()
     }
 
-    y, m, d, w = final(c, u, y, m, d)
+    y, m, d, w = final(c, u, n, y, m, d)
     return y, m, d, h, mm, sec, ns, w
 }
 
@@ -390,11 +408,11 @@ func shift(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w time.Weekday
         ns += n * u.factor()
     }
 
-    y, m, d, w = final(c, u, y, m, d)
+    y, m, d, w = final(c, u, n, y, m, d)
     return y, m, d, h, mm, sec, ns, w
 }
 
-func final(c Flag, u Unit, y, m, d int) (int, int, int, time.Weekday) {
+func final(c Flag, u Unit, n, y, m, d int) (int, int, int, time.Weekday) {
     if !c.overflow && u <= Month {
         // 仅针对这些时间单元做天数溢出处理
         if dd := DaysIn(y, m); d > dd {
@@ -413,6 +431,12 @@ func final(c Flag, u Unit, y, m, d int) (int, int, int, time.Weekday) {
         case Week:
             d += 6
         default:
+        }
+    } else {
+        // Go 模式下，序数周会定位到从月末倒数周的周初，
+        // 所以需要加上 6 天，来到本月最后一天。
+        if u == Week && c.ordWeek && n < 0 && c.goMode {
+            d += 6
         }
     }
 

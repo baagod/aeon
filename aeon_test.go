@@ -1,10 +1,16 @@
 package aeon
 
 import (
+    "fmt"
     "testing"
+    "time"
 )
 
-func TestFunc(_ *testing.T) {}
+func TestFunc(_ *testing.T) {
+    t := Parse("2021-07-21 14:35:29")
+    t = t.Round(15 * time.Minute)
+    fmt.Println(t)
+}
 
 func assert(t *testing.T, actual Time, expected string, name string) {
     t.Helper()
