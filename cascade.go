@@ -32,6 +32,8 @@ const (
     Overflow = flagSign | (1 << 3)
     // ABS 绝对时间标志 (内部使用)
     ABS = flagSign | (1 << 4)
+    // Qtr 季度周标志 (基于季度索引)
+    Qtr = flagSign | (1 << 5)
 )
 
 // Flag 承载级联操作的上下文配置
@@ -39,6 +41,7 @@ type Flag struct {
     isoWeek  bool // [ISO] 周标志 (遵循 ISO 周规则)
     fullWeek bool // [完整] 周标志 (从本月首周一开始)
     ordWeek  bool // [序数] 周标志 (从本月1日开始)
+    qtrWeek  bool // [季度] 周标志 (基于季度索引)
     overflow bool // 是否允许溢出
     abs      bool // 是否绝对年模式
     fill     bool // 是否置满时间
@@ -65,6 +68,7 @@ func cascade(t Time, f path, fill bool, u Unit, mask int, args ...int) Time {
         c.isoWeek = mask&ISO == ISO
         c.fullWeek = mask&Full == Full
         c.ordWeek = mask&Ord == Ord
+        c.qtrWeek = mask&Qtr == Qtr
         c.overflow = mask&Overflow == Overflow
         c.abs = mask&ABS == ABS
     }
