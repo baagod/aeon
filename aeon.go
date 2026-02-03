@@ -325,6 +325,18 @@ func (t Time) IsSame(u Unit, target Time) bool {
     }
 }
 
+// Until 返回 t 与当前时间 (Now) 的相对时长 (t - Now)。
+//
+// 返回值：
+//   - 正数：t 在未来
+//   - 负数：t 在过去
+//   - 零：  t 是现在
+func (t Time) Until() time.Duration {
+    return time.Until(t.time)
+}
+
+// 返回现在到 t 经过的持续时间
+
 // Near 返回在集合中距离 t 最近 ("<") 或 最远 (">") 的时间
 //
 // 类似于离散版的 Round。
@@ -403,16 +415,6 @@ func Maxmin(op string, times ...Time) Time {
     }
 
     return res
-}
-
-// Since 返回 t 到现在经过的持续时间
-func Since(t Time) time.Duration {
-    return time.Since(t.time)
-}
-
-// Until 返回现在到 t 经过的持续时间
-func Until(t Time) time.Duration {
-    return time.Until(t.time)
 }
 
 // IsLeapYear 返回 y 是否闰年
