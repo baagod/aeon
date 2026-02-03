@@ -284,7 +284,7 @@ func (t Time) IsLeapYear() bool {
     return IsLeapYear(t.Year())
 }
 
-// IsLongYear 返回 t 是否长年
+// IsLongYear 返回 t 是否 ISO 长年
 func (t Time) IsLongYear() bool {
     return IsLongYear(t.Year())
 }
@@ -325,62 +325,23 @@ func (t Time) IsSame(u Unit, target Time) bool {
     }
 }
 
-// --- 时间格式 ---
-
-func (t Time) Format(layout string) string                 { return t.time.Format(layout) }
-func (t Time) AppendFormat(b []byte, layout string) []byte { return t.time.AppendFormat(b, layout) }
-func (t Time) String() string                              { return t.time.Format(DTNs) }
-
-func (t Time) ToString(f ...string) string {
-    if len(f) > 0 {
-        return t.time.Format(f[0])
-    }
-    return t.time.Format(DTNs)
-}
-
-// --- Aeon 包方法 ---
-
-// Near 在集合 times 中寻找距离 base 最近或最远的时间点
+// Near 返回在集合中距离 t 最近 ("<") 或 最远 (">") 的时间
 //
-// 参数 op：
-//   - "<" : 最近 (Closest)
-//   - ">" : 最远 (Farthest)
-func Near(op string, base Time, times ...Time) Time {
-    if len(times) == 0 {
-        return base
+// 类似于离散版的 Round。
+func (t Time) Near(op string, times ...Time) Time {
+    if len(times) == 0 || op == "" {
+        return t
     }
 
+    // 初始化基准：默认第一个元素为当前最优解，并计算其与 t 的绝对距离
     res := times[0]
-    diff := math.Abs(base.Sub(res).Seconds())
+    best := t.Sub(res).Abs()
 
-    for i := 1; i < len(times); i++ {
-        secs := math.Abs(base.Sub(times[i]).Seconds())
-        if op == ">" && secs > diff {
-            diff, res = secs, times[i]
-        } else if op == "<" && secs < diff {
-            diff, res = secs, times[i]
-        }
-    }
-
-    return res
-}
-
-// Maxmin 返回一组时间中的极值
-//
-// 参数 op：
-//   - ">" : 最大值（最晚）
-//   - "<" : 最小值（最早）
-func Maxmin(op string, times ...Time) Time {
-    if len(times) == 0 {
-        return Time{}
-    }
-
-    res := times[0]
-    for i := 1; i < len(times); i++ {
-        if op == ">" && times[i].Gt(res) {
-            res = times[i]
-        } else if op == "<" && times[i].Lt(res) {
-            res = times[i]
+    // 遍历剩余元素 (从索引 1 开始)，通过比较绝对距离寻找更优解。
+    for _, x := range times[1:] {
+        d := t.Sub(x).Abs() // 计算当前元素与 t 的绝对距离
+        if (op == "<" && d < best) || (op == ">" && d > best) {
+            res, best = x, d
         }
     }
 
@@ -389,7 +350,7 @@ func Maxmin(op string, times ...Time) Time {
 
 // Between 判断 t 是否在 (start, end) 区间内。
 //
-// 可选参数 bounds 用于控制边界包含性（默认为 "="）：
+// 可选参数 bounds 用于控制边界包含性 (默认为 "=")：
 //   - "=" : 包含边界
 //   - "!" : 不包含边界
 //   - "[" : 包含左边界
@@ -409,6 +370,39 @@ func (t Time) Between(start, end Time, bounds ...string) bool {
     default: // 全包含 (默认)
         return (t.Gt(start) || t.Eq(start)) && (t.Lt(end) || t.Eq(end))
     }
+}
+
+// --- 时间格式 ---
+
+func (t Time) Format(layout string) string                 { return t.time.Format(layout) }
+func (t Time) AppendFormat(b []byte, layout string) []byte { return t.time.AppendFormat(b, layout) }
+func (t Time) String() string                              { return t.time.Format(DTNs) }
+
+func (t Time) ToString(f ...string) string {
+    if len(f) > 0 {
+        return t.time.Format(f[0])
+    }
+    return t.time.Format(DTNs)
+}
+
+// --- Aeon 包方法 ---
+
+// Maxmin 在一组时间中返回 最大 (">") 或 最小值 ("<")
+func Maxmin(op string, times ...Time) Time {
+    if len(times) == 0 {
+        return Time{}
+    }
+
+    res := times[0]
+    for i := 1; i < len(times); i++ {
+        if op == ">" && times[i].Gt(res) {
+            res = times[i]
+        } else if op == "<" && times[i].Lt(res) {
+            res = times[i]
+        }
+    }
+
+    return res
 }
 
 // Since 返回 t 到现在经过的持续时间
