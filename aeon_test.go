@@ -54,8 +54,37 @@ func TestNear(t *testing.T) {
     })
 
     t.Run("Invalid Operator", func(t *testing.T) {
-        // 验证当前行为：未知操作符返回第一个元素 (因为不满足任何更新条件)
-        assert(t, base.Near("unknown", t1, t2), t1.String(), "未知操作符应返回第一个候选者")
+        // 验证当前行为：未知操作符返回 Base (因为不满足任何更新条件)
+        assert(t, base.Near("unknown", t1, t2), base.String(), "未知操作符应返回 Base")
+    })
+}
+
+func TestMaxmin(t *testing.T) {
+    t1 := Parse("2021-07-21 09:00:00")
+    t2 := Parse("2021-07-21 12:00:00")
+    t3 := Parse("2021-07-21 15:00:00")
+
+    t.Run("Max (>)", func(t *testing.T) {
+        assert(t, Maxmin(">", t1, t2, t3), "2021-07-21 15:00:00", "应该返回最晚时间")
+        assert(t, Maxmin(">", t3, t2, t1), "2021-07-21 15:00:00", "乱序输入应该返回最晚时间")
+    })
+
+    t.Run("Min (<)", func(t *testing.T) {
+        assert(t, Maxmin("<", t1, t2, t3), "2021-07-21 09:00:00", "应该返回最早时间")
+        assert(t, Maxmin("<", t3, t2, t1), "2021-07-21 09:00:00", "乱序输入应该返回最早时间")
+    })
+
+    t.Run("Edge Cases", func(t *testing.T) {
+        assert(t, Maxmin(">", t1), t1.String(), "单元素返回自身")
+        assert(t, Maxmin("<", t1), t1.String(), "单元素返回自身")
+        assert(t, Maxmin(">"), Time{}.String(), "无参数返回零值")
+        assert(t, Maxmin("", t1, t2), t1.String(), "空操作符返回第一个元素")
+        assert(t, Maxmin("unknown", t1, t2), t1.String(), "未知操作符返回第一个元素")
+    })
+
+    t.Run("Equal Values", func(t *testing.T) {
+        assert(t, Maxmin(">", t1, t1), t1.String(), "相同值返回其一")
+        assert(t, Maxmin("<", t1, t1), t1.String(), "相同值返回其一")
     })
 }
 
