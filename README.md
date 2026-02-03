@@ -1,217 +1,229 @@
-> 你或许觉得我疯了，没关系，我也这么认为。
+> You might think I'm crazy. That's okay, I think so too.
 >
-> 记不清是从哪一刻开始了，也许是源于对 `time.Time` 和现有时间库的不满与愤怒 —— 我产生了一个近乎荒诞的执念：**我自己写一个 Go 时间库？**
+> I don't remember exactly when it started. Maybe it was born out of frustration and anger with `time.Time` and existing
+> time libraries. I developed a borderline absurd obsession: **"Why don't I write my own Go time library?"**
 >
-> 这一切始于那个简陋、甚至可以说是有些 "丑陋" 的前身 `thru`，我决定对其系统化更新与重构。无数个灵感与想象如烟火般炸裂，才最终让它完成了跨越维度的蜕变。
+> It all began with a crude, perhaps even "ugly" prototype called `thru`. I decided to systematically refactor and
+> rewrite it from the ground up. Countless ideas exploded like fireworks, eventually leading to a metamorphosis across
+> dimensions.
 >
-> 我将其正式命名为：**Aeon**。在古老的哲学中，Aeon 代表着 "永恒" 与 "层叠的维度"。
+> I named it **Aeon**. In ancient philosophy, Aeon represents "eternity" and "layered dimensions".
 >
-> 我选择这个名字，是因为它代表了时间更本质的逻辑 —— 时间不是一条细长的直线，它是流动的、是可以被嵌套和穿透的宇宙。
+> I chose this name because it represents the truer logic of time—time is not a thin, linear line; it is a flowing
+> universe that can be nested and penetrated.
 
 # Aeon
 
-> Aeon 是一个基于 **时间容器** 索引的 Go 时间导航库，用结构化导航替代线性计算，以更贴近人类时间直觉的方式表达复杂时间意图。
+[![zread](https://img.shields.io/badge/Ask_Zread-_.svg?style=flat&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff)](https://zread.ai/baagod/aeon)
 
-🎬 [视频讲解](https://www.bilibili.com/video/BV1vrrbBGEzN)
+🇨🇳 [中文](README_CN.md) | 🇺🇸 [English](README.md)
 
-## 📦 安装
+> Aeon is a **Zero-Allocation** time navigation library for Go based on **Time Containers**. It replaces linear
+> calculation with structured navigation, expressing complex time intentions in a way that aligns with human intuition.
+
+## 🚀 Performance: A Dimensional Blow
+
+Aeon achieves **True Zero Allocation** (Zero Alloc) and leverages a **Cascading Addressing** architecture. Whether you
+span multiple dimensions (from Millennium to Nanosecond), Aeon completes the operation in a **single atomic step**. The
+more complex the logic, the more staggering Aeon's lead becomes.
+
+> [!NOTE]
+> The following baseline data were obtained under single-atom operations without **using** cascade parameters.
+
+```bash
+Benchmark       | ns/op | allocs/op x B/op | up
+
+New             |
+Aeon            | 18.6 | 0 | x74
+Carbon          | ████████████████████████████████████████ 1376 | 13x1600
+
+Now             |
+Aeon            | 7.8 | 0 | x177
+Carbon          | ████████████████████████████████████████ 1384 | 13x1600
+
+From Unix       |
+Aeon            | 3.6 | 0 | x383
+Carbon          | ████████████████████████████████████████ 1380 | 13x1600
+
+From Std        |
+Aeon            | 5.0 | 0 | x323
+Carbon          | ████████████████████████████████████████ 1619 | 13x1600
+
+Parse (Compact) |
+Aeon            | 23.3 | 0 | x195
+Carbon          | ████████████████████████████████████████ 4561 | 85x3922
+
+Parse (ISO)     |
+Aeon            | 19.6 | 0 | x91
+Carbon          | ████████████████████████████████████████ 1794 | 15x1697
+
+Start/End       |
+Aeon            | █ 56.4 | 0 | x20
+Carbon          | ████████████████████ 1141 | 7x1440
+
+Add (Offset)    |
+Aeon            | █ 56.5 | 0 | x2.5
+Carbon          | ██ 142 | 2x128
+
+Set (Position)  |
+Aeon            | █ 58.7 | 0 | x2.6
+Carbon          | ███ 156 | 2x128
+```
+
+## 📦 Installation
 
 ```bash
 go get github.com/baagod/aeon
 ```
 
-## 🧊 核心概念：容器
+## 🧊 Core Concept: Containers
 
-Aeon 的核心是基于 **容器** 偏移。所有 **导航**，本质上都是在 **当前单位的父容器** 中进行索引 (从 `0` 开始)。例如：
+The core of Aeon is **Container Offset**. All **navigation** is essentially indexing within the **Parent Container** of
+the current unit (starting from `0`). For example:
 
-- **`GoYear(5)`**: 不是去公元 5 年，而是在 **本年代** 这个 **父容器** 中，**索引** 到第 5 年 ➜ `···5`。
-- **`GoDecade(2)`**: 索引到 **本世纪** 第 2 个年代 ➜ `··2·`。
-- **`GoCentury(0)`**: 索引到 **本千年** 第 0 个世纪 ➜ `·0··`。
+- **`GoYear(5)`**: Not going to the year 5 AD, but indexing to the **5th year** within the **current Decade** (the
+  parent container) ➜ `···5`.
+- **`GoDecade(2)`**: Indexing to the **2nd Decade** of the **current Century** ➜ `··2·`.
+- **`GoCentury(0)`**: Indexing to the **0th Century** of the **current Millennium** ➜ `·0··`.
 
 ```text
-[千年 Millennium]
-  └─ [0...9 世纪 Century]
-       └─ [0...9 年代 Decade]
-            └─ [0...9 年份 Year]
-                 └─ [1...12 月份 Month]
+[Millennium]
+  └─ [0...9 Century]
+       └─ [0...9 Decade]
+            └─ [0...9 Year]
+                 └─ [1...12 Month]
 
-示例：GoYear(5) 寻址逻辑
+Example: GoYear(5) Addressing Logic
          [-9]       [-8]            [-5]        [-4]             [-1]
 2020 ─┬─ 2021 ──┬── 2022 ··· ──┬── [2025] ──┬── 2026 ─┬─ ··· ─┬─ 2029
 [0]      [1]        [2]             [5]         [6]              [9]
 ```
 
-## 🧭 导航矩阵
+## 🧭 Navigation Matrix
 
-Aeon 的 API 设计是完全 **正交** 的，你只需要记住 **4 个动作**：
+Aeon's API design is completely **Orthogonal**. You only need to remember **4 Actions**:
 
-- `Go.. [·]` **全绝定位：** `GoYear(5, 1)` ➜ 本年代第 5 年 1 月
-- `By.. [➜]` **全相偏移：** `ByYear(1, 5)` ➜ 偏移 1 年 5 月
-- `At.. [·, ➜]` **先定后移：** `AtYear(5, 1)` ➜ 定位到本年代的第 5 年再偏移 1 个月
-- `In.. [➜, ·]` **先移后定：** `InYear(1, 5)` ➜ 明年 5 月
+- `Go.. [·]` **Absolute Positioning:** `GoYear(5, 1)` ➜ 5th Year, 1st Month of current decade.
+- `By.. [➜]` **Relative Offset:** `ByYear(1, 5)` ➜ Offset by 1 Year and 5 Months.
+- `At.. [·, ➜]` **Position then Offset:** `AtYear(5, 1)` ➜ Locate 5th Year, then offset 1 Month.
+- `In.. [➜, ·]` **Offset then Position:** `InYear(1, 5)` ➜ Next Year (Offset 1), then 5th Month.
 
 > [!IMPORTANT]
 >
-> 1. `By` 系列方法默认值为 `1`，其余为 `0`。
-> 2. 无效的 `0` 时间 (如 `0` 月) 在 **定位模式** 下（而非偏移）保持不变。
+> 1. `By` methods default to `1`. Others default to `0`.
+> 2. Invalid `0` time (e.g., 0th Month) remains unchanged in **Positioning Mode** (but works in Offset mode).
+> 3. `Go` positions only the target unit and preserves original time details as much as possible** (e.g., `GoWeek` automatically retains the weekday).
+>   ```go 
+>   t := Parse("2021-07-21 07:14:15") // Wed
+>   t.GoMonth(1)  // 2021-01-21 07:14:15 (Set to Jan, time preserved)
+>   t.GoWeek(1)   // 2021-06-30 07:14:15 (1st Week, Weekday preserved as Wed)
+>   ```
 
 ---
 
-之后，配合 `Start/End` 前缀可定位到时间边界：
+Combined with `Start/End` prefixes to hit time boundaries:
 
-- `StartYear()`: 本年 **开始时间** (01-01 00:00:00...)
-- `EndYear()`: 本年 **结束时间** (12-31 23:59:59...)
+- `StartYear()`: Start of this year (01-01 00:00:00...)
+- `EndYear()`: End of this year (12-31 23:59:59...)
 
 ---
 
-配合 6 个 **顶级** 方法，让 **首个** 参数进入到 **绝对年份**：
+6 **Top-Level** methods allow the **first parameter** to enter **Absolute Year** mode:
 
 1. `Go(2025, 2)` ➜ 2025-02
-2. `At(2025, 2)` ➜ 定位到 2025 年后再偏移 2 个月
+2. `At(2025, 2)` ➜ Position at 2025, then offset 2 months.
 3. `Start(2025, 2)` ➜ 2025-02-01 00:00:00
-4. `StartAt(2025, 1)` ➜ 定位到 2025 年后再偏移 1 个月的月初
+4. `StartAt(2025, 1)` ➜ Position at 2025, offset 1 month, then Start of Month.
 5. `End(2025, 2)` ➜ 2025-02-28 23:59:59...
-6. `EndAt(2025, 1)` ➜ 定位到 2025 年后再偏移 1 个月的月末
+6. `EndAt(2025, 1)` ➜ Position at 2025, offset 1 month, then End of Month.
 
 ---
 
-### ♾️ 级联参数
+### ♾️ Cascading Parameters
 
-链式调用？不，是原子操作！所有方法均支持 **变长参数** 向下级联，参数像水流，**一行代码即可完成复杂定位**。
+Method chaining? No, this is **Atomic Operation**! All methods support **Variadic Parameters** that cascade downwards.
+Parameters flow like water, completing complex positioning in **one line of code**.
 
-Aeon 会根据 **<u>入口单位</u>** 自动切换 4 种不同的级联序列：
+Aeon automatically switches between 4 cascading sequences based on the **<u>Entry Unit</u>**:
 
-1. **年序列 `Default`**：`世纪 ➜ 年代 ➜ 年 ➜ 月 ➜ 日 ➜ 时.. ➜ 纳秒`
-2. **季度流 `Quarter`**：`季度 ➜ 月 (季内) ➜ 日 ➜ 时.. ➜ 纳秒`
-3. **周序列 `Week`🦬**：`周 (智能上下文) ➜ 星期 ➜ 时.. ➜ 纳秒`
+1. **Year Sequence `Default`**: `Century ➜ Decade ➜ Year ➜ Month ➜ Day ➜ Hour.. ➜ Nanosecond`
+2. **Quarter Flow `Quarter`**: `Quarter ➜ Month (in Quarter) ➜ Day ➜ Hour.. ➜ Nanosecond`
+3. **Week Sequence `Week`🦬**: `Week (Smart Context) ➜ Weekday ➜ Hour.. ➜ Nanosecond`
 
-   这是 **变形金刚**！它根据传入的 **标志位** 自动切换形态：
-   
-   - `ISO`: ISO 年周。从本年第 1 个 ISO 年周开始。
-   - `Full`: 完整周。从本月第 1 个周一开始。
-   - `Ord`: 序数周。从本月 1 日开始。
-   - `Qtr`: 季内周。从本季度首月 1 日开始。
-   - `Default`: 日历周/自然周，遵循日历行视觉。
+   This is a **Transformer**! It automatically shifts shape based on the passed **Flags**:
 
-4. **星期流 `Weekday`**：`星期 ➜ 时.. ➜ 纳秒`
+   - `ISO`: ISO Week. Starts from the 1st ISO week of the year.
+   - `Full`: Full Week. Starts from the 1st Monday of the month.
+   - `Ord`: Ordinal Week. Starts from the 1st day of the month.
+   - `Qtr`: Quarter Week. Starts from the 1st day of the quarter's first month.
+   - `Default`: Calendar/Natural Week. Follows the calendar visual row.
+
+4. **Weekday Flow `Weekday`**: `Weekday ➜ Hour.. ➜ Nanosecond`
 
 ```go
-// 相对偏移 1 年 3 月 5 日
+// Relative offset: 1 Year, 3 Months, 5 Days
 ByYear(1, 3, 5)
 
-// 本季度第 2 个星期二
+// 2nd Tuesday of the current Quarter
 GoWeek(aeon.Qtr|aeon.Ord, 2, 2)
 
-// 本季度最后一个星期五
+// Last Friday of the current Quarter
 GoWeek(aeon.Qtr|aeon.Ord, -1, 5)
 
-// 2025 年 2 月最后一天 23 点整
+// 2025, Feb, Last Day, 23:00
 Go(2025).StartMonth(2, -1, 23)
 
-// 本年第 3 个季度最后一个月，最后 2 天结束时间
+// End of the 3rd Quarter, minus 1 month, minus 2 days
 EndQuarter(3, -1, -2)
 
-// 2025 年第 10 个 ISO 周一
+// 10th ISO Monday of 2025
 Go(2025).StartWeek(aeon.ISO, 10, 1)
 
-// 本月从 1 日开始的第 3 个 "七天周" 周五（本月第 3 个星期五）
+// 3rd Friday of this month (Ordinal week starting from 1st)
 StartWeek(aeon.Ord, 3, 5)
 
-// 本月最后一个周五
+// Last Friday of this month
 GoWeek(aeon.Ord, -1, 5)
 
-// 上个季度结束时间
+// End of previous Quarter
 EndByQuarter(-1)
 
-// 本季度最后一个月 1 号
+// 1st day of the last month of this Quarter
 StartQuarter(0, -1, 1)
 
-// 本周五 18 点 (下班时间)
+// This Friday at 18:00 (Happy Hour)
 StartWeekday(5, 18)
 
-// 本月倒数第 3 天
+// 3rd to last day of this month
 StartDay(-3)
 
-// 下周三下午 2 点
+// Next Wednesday at 2 PM
 StartInWeek(1, 3, 14)
 
-// 年度归档：年初/年末边界
+// Yearly Archive: Start/End boundaries
 StartYear() / EndYear()
 
-// 下个月最后一天
+// Last day of next month
 EndInMonth(1, -1)
 ```
 
-*负数不仅仅是减法，它是 **反向索引**，代表在 **"容器内倒数第 N 个"**。*
+*Negative numbers are not just subtraction; they are **Reverse Indexing**, representing the **"N-th from last"** item in
+the container.*
 
-### 🛡️ 溢出保护
+### 🛡️ Overflow Protection
 
-Aeon 的核心哲学是 **意图优先**，默认导航会保护 **"月及以上单位"** 溢出天数。
+Aeon's core philosophy is **Intention First**. By default, navigation protects against day overflow for units **"Month
+and above"**.
 
 ```go
 base := NewDate(2025, 1, 31)
-base.GoMonth(2) // 2025-02-28 (保护)
-base.ByMonth(Overflow, 1) // 2025-03-03 (溢出)
-base.ByMonth(1, 2) // 🛡️🦬 2025-03-02 (保护到 2-28 再加2天)
+base.GoMonth(2) // 2025-02-28 (Protected)
+base.ByMonth(Overflow, 1) // 2025-03-03 (Overflow allowed)
+base.ByMonth(1, 2) // 🛡️🦬 2025-03-02 (Protect to 2-28, then add 2 days)
 
-// 跨年：从闰年到平年
+// Leap Year Handling
 leap := NewDate(2024, 2, 29)
-leap.ByYear(1) // 2025-02-28 (保护)
-leap.ByYear(Overflow, 1) // 2025-03-01 (溢出：跨月)
-leap.ByYear(4)           // 2028-02-29 (下一个闰年)
-```
-
-## 🚀 性能基准
-
-Aeon 实现了 **全零内存分配 (Zero Alloc)**，并得益于 **级联寻址**架构，无论你跨越多少个时间维度 (从千年到纳秒)，Aeon 始终在 **单次原子操作** 内完成。**逻辑越复杂，Aeon 的领先倍数就越惊人。**
-
-> [!NOTE]
-> 以下基准数据在 **未使用** 级联参数的单一原子操作下测得。
-
-```bash
-Benchmark      | ns/op | allocs/op x B/op | up
-
-New            |
-Aeon           | 18.6 | 0 | x74
-Carbon         | ████████████████████████████████████████ 1376 | 13x1600
-
-Now            |
-Aeon           | 7.8 | 0 | x177
-Carbon         | ████████████████████████████████████████ 1384 | 13x1600
-
-From Unix      |
-Aeon           | 3.6 | 0 | x383
-Carbon         | ████████████████████████████████████████ 1380 | 13x1600
-
-From Std       |
-Aeon           | 5.0 | 0 | x323
-Carbon         | ████████████████████████████████████████ 1619 | 13x1600
-
-To Std         |
-Aeon           | 7.9 | 0 | x179
-Carbon         | ████████████████████████████████████████ 1411 | 13x1600
-
-ISO8601 Parse  |
-Aeon           | 34.7 | 0 | x241
-Carbon         | ████████████████████████████████████████ 8371 | 163x6952
-
-Add Overflow   |
-Aeon           | █ 58.5  | 0 | x1.6
-Carbon         | ██ 93.0 | 2x128
-
-Add NoOverflow |
-Aeon           | █ 56.2   | 0 | x2.5
-Carbon         | ████ 142 | 2x128
-
-Set Overflow   |
-Aeon           | ██ 60.8 | 0 |
-Carbon         | █ 37.4  | 0 | x1.6
-
-Set NoOverflow |
-Aeon           | █ 58.2  | 0 | x2.7
-Carbon         | ███ 158 | 2x128
-
-Start/End      |
-Aeon           | █ 56.4 | 0 | x20
-Carbon         | ████████████████████ 1141 | 7x1440
+leap.ByYear(1) // 2025-02-28 (Protected)
+leap.ByYear(Overflow, 1) // 2025-03-01 (Overflow: Crosses month boundary)
+leap.ByYear(4)           // 2028-02-29 (Next Leap Year)
 ```

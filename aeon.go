@@ -335,13 +335,12 @@ func (t Time) Until() time.Duration {
     return time.Until(t.time)
 }
 
-// 返回现在到 t 经过的持续时间
-
 // Near 返回在集合中距离 t 最近 ("<") 或 最远 (">") 的时间
 //
 // 类似于离散版的 Round。
 func (t Time) Near(op string, times ...Time) Time {
-    if len(times) == 0 || op == "" {
+    isGt, isLt := op == ">", op == "<"
+    if len(times) == 0 || !isGt && !isLt {
         return t
     }
 
@@ -349,10 +348,9 @@ func (t Time) Near(op string, times ...Time) Time {
     res := times[0]
     best := t.Sub(res).Abs()
 
-    // 遍历剩余元素 (从索引 1 开始)，通过比较绝对距离寻找更优解。
     for _, x := range times[1:] {
         d := t.Sub(x).Abs() // 计算当前元素与 t 的绝对距离
-        if (op == "<" && d < best) || (op == ">" && d > best) {
+        if (isGt && d > best) || (isLt && d < best) {
             res, best = x, d
         }
     }
@@ -400,17 +398,24 @@ func (t Time) ToString(f ...string) string {
 // --- Aeon 包方法 ---
 
 // Maxmin 在一组时间中返回 最大 (">") 或 最小值 ("<")
+//
+//  - 如果 `op` 不是 ">" 或 "<"，返回集合中的第一个时间。
+//  - 如果集合为空，返回零值 Time。
 func Maxmin(op string, times ...Time) Time {
     if len(times) == 0 {
         return Time{}
     }
 
     res := times[0]
-    for i := 1; i < len(times); i++ {
-        if op == ">" && times[i].Gt(res) {
-            res = times[i]
-        } else if op == "<" && times[i].Lt(res) {
-            res = times[i]
+    isGt, isLt := op == ">", op == "<"
+
+    if !isGt && !isLt {
+        return res
+    }
+
+    for _, x := range times[1:] {
+        if isGt && x.Gt(res) || isLt && x.Lt(res) {
+            res = x
         }
     }
 
