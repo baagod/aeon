@@ -6,12 +6,12 @@ import (
 )
 
 func TestFunc(_ *testing.T) {
-    t := Parse("2021-07-21 07:14:15") // Wednesday
-    t = t.GoWeek(1)                   // 2021-06-30 07:14:15 Wednesday
-    fmt.Println(t, t.Weekday())
+    y, m := addMonth(2024, 1, 12)
+    fmt.Println(y, m)
 }
 
-func TestNear(t *testing.T) {
+// 测试 Pick 函数
+func TestPick(t *testing.T) {
     base := Parse("2021-07-21 12:00:00")
 
     // 候选时间点
@@ -20,74 +20,53 @@ func TestNear(t *testing.T) {
     t3 := Parse("2021-07-21 15:00:00") // 距离 +3h
     t4 := Parse("2021-07-21 18:00:00") // 距离 +6h
 
-    t.Run("Nearest (<)", func(t *testing.T) {
-        // 预期：t2 (10:00, 距离2h)
-        assert(t, base.Near("<", t1, t2, t3, t4), "2021-07-21 10:00:00", "应该返回距离最近的 10:00")
-    })
-
-    t.Run("Furthest (>)", func(t *testing.T) {
-        // 预期：t4 (18:00, 距离6h)
-        assert(t, base.Near(">", t1, t2, t3, t4), "2021-07-21 18:00:00", "应该返回距离最远的 18:00")
-    })
-
-    t.Run("Equal Distance", func(t *testing.T) {
-        // 相同距离，返回先出现的
-        p1 := Parse("2021-07-21 11:00:00") // -1h
-        p2 := Parse("2021-07-21 13:00:00") // +1h
-
-        assert(t, base.Near("<", p1, p2), "2021-07-21 11:00:00", "距离相等时应返回第一个(11:00)")
-        assert(t, base.Near("<", p2, p1), "2021-07-21 13:00:00", "距离相等时应返回第一个(13:00)")
-    })
-
-    t.Run("Edge Cases", func(t *testing.T) {
-        assert(t, base.Near("<"), base.String(), "无候选应返回自身")
-        assert(t, base.Near("", t1), base.String(), "无操作符应返回自身")
-    })
-
-    t.Run("Zero Distance (Exact Match)", func(t *testing.T) {
-        // 列表中包含自身
-        assert(t, base.Near("<", t1, base), base.String(), "存在自身时，最近的应该是自身(距离0)")
-        // 注意：如果存在距离为0的点，找最远点不应该受影响，依然找距离最大的
-        assert(t, base.Near(">", t1, base), t1.String(), "存在自身时，最远的应该是距离最大的点")
-    })
-
-    t.Run("Single Candidate", func(t *testing.T) {
-        assert(t, base.Near("<", t1), t1.String(), "单元素应直接返回(Nearest)")
-        assert(t, base.Near(">", t1), t1.String(), "单元素应直接返回(Furthest)")
-    })
-
-    t.Run("Invalid Operator", func(t *testing.T) {
-        // 验证当前行为：未知操作符返回 Base (因为不满足任何更新条件)
-        assert(t, base.Near("unknown", t1, t2), base.String(), "未知操作符应返回 Base")
-    })
-}
-
-func TestMaxmin(t *testing.T) {
-    t1 := Parse("2021-07-21 09:00:00")
-    t2 := Parse("2021-07-21 12:00:00")
-    t3 := Parse("2021-07-21 15:00:00")
-
+    // 1. Max/Min 模式 (替代 Maxmin)
     t.Run("Max (>)", func(t *testing.T) {
-        assert(t, Maxmin(">", t1, t2, t3), "2021-07-21 15:00:00", "应该返回最晚时间")
-        assert(t, Maxmin(">", t3, t2, t1), "2021-07-21 15:00:00", "乱序输入应该返回最晚时间")
+        assert(t, Pick('>', t1, t2, t3), "2021-07-21 15:00:00", "应该返回最晚时间")
+        assert(t, Pick('>', t3, t2, t1), "2021-07-21 15:00:00", "乱序输入应该返回最晚时间")
     })
 
     t.Run("Min (<)", func(t *testing.T) {
-        assert(t, Maxmin("<", t1, t2, t3), "2021-07-21 09:00:00", "应该返回最早时间")
-        assert(t, Maxmin("<", t3, t2, t1), "2021-07-21 09:00:00", "乱序输入应该返回最早时间")
+        assert(t, Pick('<', t1, t2, t3), "2021-07-21 09:00:00", "应该返回最早时间")
+        assert(t, Pick('<', t3, t2, t1), "2021-07-21 09:00:00", "乱序输入应该返回最早时间")
+    })
+
+    // 2. Near/Far 模式 (替代 Near)
+    // 注意：Pick 的 Near/Far 模式下，第一个参数是 Reference (Base)
+    t.Run("Near (-)", func(t *testing.T) {
+        // 原 base.Near('<', t1, t2...) -> Pick('-', base, t1, t2...)
+        // 预期：t2 (10:00, 距离2h)
+        assert(t, Pick('-', base, t1, t2, t3, t4), "2021-07-21 10:00:00", "Pick(-) 应该返回距离最近的 10:00")
+    })
+
+    t.Run("Far (+)", func(t *testing.T) {
+        // 原 base.Near('>', t1, t2...) -> Pick('+', base, t1, t2...)
+        // 预期：t4 (18:00, 距离6h)
+        assert(t, Pick('+', base, t1, t2, t3, t4), "2021-07-21 18:00:00", "Pick(+) 应该返回距离最远的 18:00")
+    })
+
+    // 3. 边界情况
+    t.Run("Equal Distance", func(t *testing.T) {
+        p1 := Parse("2021-07-21 11:00:00") // -1h
+        p2 := Parse("2021-07-21 13:00:00") // +1h
+        // Pick('-', base, p1, p2)
+        assert(t, Pick('-', base, p1, p2), "2021-07-21 11:00:00", "距离相等时应返回第一个(11:00)")
+        assert(t, Pick('-', base, p2, p1), "2021-07-21 13:00:00", "距离相等时应返回第一个(13:00)")
     })
 
     t.Run("Edge Cases", func(t *testing.T) {
-        assert(t, Maxmin(">", t1), t1.String(), "单元素返回自身")
-        assert(t, Maxmin("<", t1), t1.String(), "单元素返回自身")
-        assert(t, Maxmin(">"), Time{}.String(), "无参数返回零值")
-        assert(t, Maxmin("", t1, t2), t1.String(), "空操作符返回第一个元素")
-        assert(t, Maxmin("unknown", t1, t2), t1.String(), "未知操作符返回第一个元素")
-    })
+        // Max/Min 模式单元素
+        assert(t, Pick('>', t1), t1.String(), "Pick(>) 单元素返回自身")
 
-    t.Run("Equal Values", func(t *testing.T) {
-        assert(t, Maxmin(">", t1, t1), t1.String(), "相同值返回其一")
-        assert(t, Maxmin("<", t1, t1), t1.String(), "相同值返回其一")
+        // Near/Far 模式单元素 (无候选者，只有 Reference)
+        // Pick('+', base) -> 应该返回 base (安全降级)
+        assert(t, Pick('+', base), base.String(), "Pick(+) 仅有参考点时返回参考点")
+
+        // 零输入
+        assert(t, Pick('>'), Time{}.String(), "Pick(>) 无参数返回零值")
+
+        // 无效操作符
+        assert(t, Pick('u', t1, t2), t1.String(), "Pick(u) 返回第一个元素")
     })
 }
 

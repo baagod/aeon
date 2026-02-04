@@ -105,8 +105,7 @@ func weekday(y int, m int, d int) time.Weekday {
 func addMonth(y, m, n int) (int, int) {
 	months := m + n
 	y += (months - 1) / 12
-	m = (months-1)%12 + 1
-	if m <= 0 {
+	if m = (months-1)%12 + 1; m <= 0 {
 		m += 12
 		y--
 	}

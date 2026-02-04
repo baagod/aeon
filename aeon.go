@@ -335,47 +335,24 @@ func (t Time) Until() time.Duration {
     return time.Until(t.time)
 }
 
-// Near 返回在集合中距离 t 最近 ("<") 或 最远 (">") 的时间
-//
-// 类似于离散版的 Round。
-func (t Time) Near(op string, times ...Time) Time {
-    isGt, isLt := op == ">", op == "<"
-    if len(times) == 0 || !isGt && !isLt {
-        return t
-    }
-
-    // 初始化基准：默认第一个元素为当前最优解，并计算其与 t 的绝对距离
-    res := times[0]
-    best := t.Sub(res).Abs()
-
-    for _, x := range times[1:] {
-        d := t.Sub(x).Abs() // 计算当前元素与 t 的绝对距离
-        if (isGt && d > best) || (isLt && d < best) {
-            res, best = x, d
-        }
-    }
-
-    return res
-}
-
 // Between 判断 t 是否在 (start, end) 区间内。
 //
-// 可选参数 bounds 用于控制边界包含性 (默认为 "=")：
-//   - "=" : 包含边界
-//   - "!" : 不包含边界
-//   - "[" : 包含左边界
-//   - "]" : 包含右边界
-func (t Time) Between(start, end Time, bounds ...string) bool {
-    b := "=" // 默认包含边界
-    if len(bounds) > 0 {
-        b = bounds[0]
+// 可选参数 bound 用于控制边界包含性 (默认为 "=")：
+//   - '=' : 包含边界
+//   - '!' : 不包含边界
+//   - '[' : 包含左边界
+//   - ']' : 包含右边界
+func (t Time) Between(start, end Time, bound ...byte) bool {
+    var b byte = '=' // 默认包含边界
+    if len(bound) > 0 {
+        b = bound[0]
     }
     switch b {
-    case "!": // 全排除
+    case '!': // 全排除
         return t.Gt(start) && t.Lt(end)
-    case "[": // 仅左含
+    case '[': // 仅左含
         return (t.Gt(start) || t.Eq(start)) && t.Lt(end)
-    case "]": // 仅右含
+    case ']': // 仅右含
         return t.Gt(start) && (t.Lt(end) || t.Eq(end))
     default: // 全包含 (默认)
         return (t.Gt(start) || t.Eq(start)) && (t.Lt(end) || t.Eq(end))
@@ -397,29 +374,50 @@ func (t Time) ToString(f ...string) string {
 
 // --- Aeon 包方法 ---
 
-// Maxmin 在一组时间中返回 最大 (">") 或 最小值 ("<")
+// Pick 从时间集合中挑选出一个满足特定条件的极值。
 //
-//  - 如果 `op` 不是 ">" 或 "<"，返回集合中的第一个时间。
-//  - 如果集合为空，返回零值 Time。
-func Maxmin(op string, times ...Time) Time {
+// op 操作符：
+//   - '>' : 最大值 (Max / Latest) - 所有参数平等
+//   - '<' : 最小值 (Min / Earliest) - 所有参数平等
+//   - '+' : 最远 (Far / Max Distance) - times[0] 为参考点，返回 times[1:] 中离它最远的。
+//   - '-' : 最近 (Near / Min Distance) - times[0] 为参考点，返回 times[1:] 中离它最近的。
+func Pick(op byte, times ...Time) Time {
     if len(times) == 0 {
         return Time{}
     }
 
     res := times[0]
-    isGt, isLt := op == ">", op == "<"
+    isMax, isMin := op == '>', op == '<'
+    isFar, isNear := op == '+', op == '-'
 
-    if !isGt && !isLt {
+    // 如果没有有效操作符，或者 Near/Far 模式下参数不足 2 个 (无候选者)
+    if (!isMax && !isMin && !isFar && !isNear) || ((isFar || isNear) && len(times) < 2) {
         return res
     }
 
-    for _, x := range times[1:] {
-        if isGt && x.Gt(res) || isLt && x.Lt(res) {
-            res = x
+    // Max/Min 逻辑 (无参考点，全员竞选)
+    if isMax || isMin {
+        for _, x := range times[1:] {
+            if (isMax && x.Gt(res)) || (isMin && x.Lt(res)) {
+                res = x
+            }
+        }
+        return res
+    }
+
+    // Near/Far 逻辑 (times[0] 是 Reference, times[1:] 是 Candidates)
+    // res 此时持有 times[0]，直接作为原点使用，避免反复访问切片
+    ret := times[1] // 默认结果是第一个候选者
+    best := res.Sub(ret).Abs()
+
+    for _, x := range times[2:] {
+        d := res.Sub(x).Abs()
+        if (isFar && d > best) || (isNear && d < best) {
+            ret, best = x, d
         }
     }
 
-    return res
+    return ret
 }
 
 // IsLeapYear 返回 y 是否闰年
