@@ -1,5 +1,3 @@
-> You might think I'm crazy. That's okay, I think so too.
->
 > I don't remember exactly when it started. Maybe it was born out of frustration and anger with `time.Time` and existing
 > time libraries. I developed a borderline absurd obsession: **"Why don't I write my own Go time library?"**
 >
