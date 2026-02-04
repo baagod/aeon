@@ -1,6 +1,9 @@
 package aeon
 
-import "time"
+import (
+    "sync"
+    "time"
+)
 
 // 时区名称常量定义 (IANA 标准)
 const (
@@ -65,42 +68,78 @@ const (
     Darwin     = "Australia/Darwin"    // 达尔文
 )
 
-// NewZone 返回指定的时区。
-//
-// 参数：
-//   - name: 时区名称（如 aeon.Shanghai 或 "Asia/Shanghai"）
-//   - shift (可选): 整数偏移小时。若提供，则创建一个以此偏移量为准的固定时区。
-//
-// 示例：
-//
-//	aeon.NewZone(aeon.Shanghai)      // 返回上海时区对象
-//	aeon.NewZone("CST", 8)           // 返回东八区固定时区对象
-func NewZone(name string, offset ...int) (loc *time.Location) {
-    if len(offset) > 0 {
-        return time.FixedZone(name, offset[0]*3600)
+var (
+    offsetZone = &ZoneCache[int]{cache: make(map[int]*time.Location, 100)}
+    fixedZone  = &ZoneCache[zoneKey]{cache: make(map[zoneKey]*time.Location, 100)}
+)
+
+type zoneKey struct {
+    name   string
+    offset int
+}
+
+type ZoneCache[K int | zoneKey] struct {
+    sync.RWMutex
+    cache map[K]*time.Location
+}
+
+func (c *ZoneCache[K]) Get(name string, k K) (loc *time.Location) {
+    // 获取偏移量
+    var off int
+    switch v := any(k).(type) {
+    case zoneKey:
+        off = v.offset
+    case int:
+        off = v
     }
 
-    if name == Local {
-        return time.Local
+    if off == 0 {
+        if name == "" || name == UTC {
+            return time.UTC
+        }
+        if name == Local {
+            return time.Local
+        }
     }
 
-    if name == UTC {
-        return time.UTC
+    if off < -86400 || off > 86400 {
+        // 这里必须分配内存，因为不能返回 nil。
+        // 但因为没有写入 map，所以攻击者无法通过这个撑爆我们的内存。
+        return &time.Location{}
     }
 
-    if loc, _ = time.LoadLocation(name); loc == nil {
-        loc = &time.Location{}
+    c.RLock()
+    if loc, _ = c.cache[k]; loc != nil { // OK
+        c.RUnlock()
+        return
+    }
+    c.RUnlock()
+
+    // 加写锁
+    c.Lock()
+    defer c.Unlock()
+
+    // 🔥 第二次检查 (必须)
+    if loc, _ = c.cache[k]; loc != nil { // OK
+        return
     }
 
+    loc = time.FixedZone(name, off)
+    c.cache[k] = loc
     return
 }
 
-func timeZone(zone any) *time.Location {
-    switch v := zone.(type) {
-    case *time.Location:
-        return v
-    case string:
-        return NewZone(v)
+// NewZone 返回指定时区
+// name: 时区名称，offset: 固定偏移小时数
+func NewZone(name string, offset ...int) *time.Location {
+    var off int
+    if len(offset) != 0 {
+        off = offset[0]
     }
-    return &time.Location{}
+    return fixedZone.Get(name, zoneKey{name: name, offset: off})
+}
+
+// NewOffset 返回指定秒数偏移的固定时区
+func NewOffset(offset int) *time.Location {
+    return offsetZone.Get("", offset)
 }
