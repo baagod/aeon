@@ -52,8 +52,9 @@ func New(y, m, d, h, mm, s int, add ...any) Time {
             }
         case time.Duration:
             ns = int(v.Nanoseconds())
-        default: // string, *time.Location
-            l = timeZone(v)
+        case string:
+            l = NewZone(v)
+        default:
         }
     }
 

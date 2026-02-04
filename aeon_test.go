@@ -1,14 +1,10 @@
 package aeon
 
 import (
-    "fmt"
     "testing"
 )
 
-func TestFunc(_ *testing.T) {
-    y, m := addMonth(2024, 1, 12)
-    fmt.Println(y, m)
-}
+func TestFunc(_ *testing.T) {}
 
 // 测试 Pick 函数
 func TestPick(t *testing.T) {
