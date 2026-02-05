@@ -1,16 +1,17 @@
 package aeon
 
 import (
+    "math"
     "time"
 )
 
-type path int
+type Action int
 
 const (
-    seAbs path = iota // Start/EndCentury (全绝对)
-    seRel             // Start/EndByCentury (全相对)
-    seAt              // StartAt/EndCentury (定位后偏移: Abs + Rel..)
-    seIn              // Start/EndInCentury (偏移后定位: Rel + Abs..)
+    seAbs Action = iota // Start/EndCentury (全绝对)
+    seRel               // Start/EndByCentury (全相对)
+    seAt                // StartAt/EndCentury (定位后偏移: Abs + Rel..)
+    seIn                // Start/EndInCentury (偏移后定位: Rel + Abs..)
     goAbs
     goRel
     goAt
@@ -18,11 +19,11 @@ const (
 )
 
 const (
-    // flagSign 是标志位的特征基座 (-1,073,741,824)，确保标志位处于 int32 的深水区
-    flagSign = -1 << 30
-    // flagThreshold 是标志位识别门槛 (-1,000,000,000)。
+    // flagSign 是标志位的特征基座 (math.MinInt)，确保标志位处于 int 的最深水区
+    flagSign = math.MinInt
+    // flagThreshold 是标志位识别门槛 (math.MinInt + 1024)。
     // 任何小于此门槛的参数均被视为标志位包。
-    flagThreshold = -1e9
+    flagThreshold = math.MinInt + 1024
 
     ISO  = flagSign | (1 << 0) // ISO 周标志
     Ord  = flagSign | (1 << 1) // Ord 周标志
@@ -49,7 +50,7 @@ type Flag struct {
 }
 
 // cascade 级联时间核心引擎
-func cascade(t Time, f path, fill bool, u Unit, mask int, args ...int) Time {
+func cascade(t Time, f Action, fill bool, u Unit, mask int, args ...int) Time {
     y, m, d := t.Date()
     h, mm, s := t.Clock()
     ns := t.time.Nanosecond()
@@ -108,12 +109,12 @@ func cascade(t Time, f path, fill bool, u Unit, mask int, args ...int) Time {
 }
 
 // a 归零时间
-func a(t Time, p path, u Unit, n ...int) Time {
+func a(t Time, p Action, u Unit, n ...int) Time {
     return cascade(t, p, false, u, 0, n...)
 }
 
 // z 置满时间
-func z(t Time, p path, u Unit, n ...int) Time {
+func z(t Time, p Action, u Unit, n ...int) Time {
     return cascade(t, p, true, u, 0, n...)
 }
 

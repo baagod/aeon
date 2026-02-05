@@ -4,7 +4,10 @@ import (
     "testing"
 )
 
-func TestFunc(_ *testing.T) {}
+func TestFunc(t *testing.T) {
+    base := Parse("2024-04-15 12:00:00")
+    assert(t, base.EndAtMonth(6, 5), "2024-06-20 23:59:59.999999999", "EndAtMonth(6, 5)")
+}
 
 // 测试 Pick 函数
 func TestPick(t *testing.T) {

@@ -56,32 +56,20 @@ func (u Unit) factor() int {
     }
 }
 
-func apply(f path, c Flag, first bool, u, p Unit, n, pN int, y, m, d, h, mm, s, ns int, w, sw time.Weekday) (int, int, int, int, int, int, int, time.Weekday) {
+func apply(f Action, c Flag, first bool, u, p Unit, n, pN int, y, m, d, h, mm, s, ns int, w, sw time.Weekday) (int, int, int, int, int, int, int, time.Weekday) {
     switch f {
     case seAbs, goAbs: // 全绝对
         return applyAbs(c, u, p, n, pN, y, m, d, h, mm, s, ns, w, sw)
-    case seRel: // 全相对（Start, End 系列）
+    case seRel, goRel: // 全相对
         return applyRel(c, u, p, n, pN, y, m, d, h, mm, s, ns, w, sw)
-    case seAt: // 首绝后相（Start, End 系列）
+    case seAt, goAt: // 首绝后相
         if first {
             return applyAbs(c, u, p, n, pN, y, m, d, h, mm, s, ns, w, sw)
         }
         return applyRel(c, u, p, n, pN, y, m, d, h, mm, s, ns, w, sw)
-    case seIn: // 首相后绝（Start, End 系列）
+    default: // seIn, goIn
         if first {
             return applyRel(c, u, p, n, pN, y, m, d, h, mm, s, ns, w, sw)
-        }
-        return applyAbs(c, u, p, n, pN, y, m, d, h, mm, s, ns, w, sw)
-    case goRel: // 全相对
-        return shift(c, u, p, n, pN, y, m, d, h, mm, s, ns, w)
-    case goAt:
-        if first {
-            return applyAbs(c, u, p, n, pN, y, m, d, h, mm, s, ns, w, sw)
-        }
-        return shift(c, u, p, n, pN, y, m, d, h, mm, s, ns, w)
-    default: // goIn
-        if first {
-            return shift(c, u, p, n, pN, y, m, d, h, mm, s, ns, w)
         }
         return applyAbs(c, u, p, n, pN, y, m, d, h, mm, s, ns, w, sw)
     }
@@ -121,11 +109,6 @@ func applyAbs(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w, sw time.
             }
         }
     case Decade:
-        if c.abs {
-            y = n * 10
-            break
-        }
-
         if n < 0 {
             y += 100
         }
@@ -339,64 +322,43 @@ func applyRel(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w, sw time.
 
     switch u {
     case Century:
+        if c.abs {
+            y = n
+            break
+        }
+        if c.goMode {
+            y += n * 100
+            break
+        }
         y += (y - y%100) + n*100
     case Decade:
+        if c.goMode {
+            y += n * 10
+            break
+        }
         y += (y - y%10) + n*10
     case Year:
         if c.abs {
             y = n
-        } else {
-            y += n
+            break
         }
+        y += n
     case Quarter:
-        m -= (m - 1) % 3
+        if !c.goMode { // se 模式：回到季首
+            m -= (m - 1) % 3
+        }
         y, m = addMonth(y, m, n*3)
     case Month:
         y, m = addMonth(y, m, n)
     case Week:
-        d -= int(w-sw+7) % 7
-        d += n * 7
-    case Weekday:
-        if n != 0 {
-            d -= int(w-sw+7) % 7 // 回到本周周初
-            d += n               // 偏移正负 n 天
+        if !c.goMode { // se 模式：回到周初
+            d -= int(w-sw+7) % 7
         }
-    case Day:
-        d += n
-    case Hour:
-        h += n
-    case Minute:
-        mm += n
-    case Second:
-        sec += n
-    case Millisecond, Microsecond, Nanosecond:
-        ns += n * u.factor()
-    }
-
-    y, m, d, w = final(c, u, n, y, m, d)
-    return y, m, d, h, mm, sec, ns, w
-}
-
-// shift 相对坐标偏移逻辑
-func shift(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w time.Weekday) (int, int, int, int, int, int, int, time.Weekday) {
-    switch u {
-    case Century:
-        y += n * 100
-    case Decade:
-        y += n * 10
-    case Year:
-        if c.abs {
-            y = n
-        } else {
-            y += n
-        }
-    case Quarter:
-        y, m = addMonth(y, m, n*3)
-    case Month:
-        y, m = addMonth(y, m, n)
-    case Week:
         d += n * 7
-    case Day, Weekday:
+    case Day, Weekday: // 在偏移场景下，都是偏移 ±n 天
+        if u == Weekday && !c.goMode && n != 0 {
+            d -= int(w-sw+7) % 7 // se 模式：回到周初
+        }
         d += n
     case Hour:
         h += n
