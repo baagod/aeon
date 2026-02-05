@@ -116,11 +116,11 @@ func TestWeeksNavigation(t *testing.T) {
         // 2026-01-21 是周三，ISO 第4周 (1月19日-1月25日)
         // ISO 8601: 第1周是包含第一个周四的周
         // 2026年1月1日是周四，所以 ISO 第1周 = 2025-12-29(周一) 到 2026-01-04(周日)
-        assert(t, base.GoWeek(ISO, 0), "2026-01-21 13:14:15", "GoWeek(ISO, 0)")
-        assert(t, base.GoWeek(ISO, 1), "2025-12-29 13:14:15", "GoWeek(ISO, 1) ISO 第1周起点")
-        assert(t, base.GoWeek(ISO, 2), "2026-01-05 13:14:15", "GoWeek(ISO, 2) ISO 第2周起点")
-        assert(t, base.GoWeek(ISO, -1), "2026-12-28 13:14:15", "GoWeek(ISO, -1) 本年最后一周起点")
-        assert(t, base.GoWeek(ISO, -2), "2026-12-21 13:14:15", "GoWeek(ISO, -2) 本年倒数第2周起点")
+        assert(t, base.GoWeek(ISO, 0), "2026-01-21 13:14:15", "GoWeek(ISO, 0) 当前时间")
+        assert(t, base.GoWeek(ISO, 1), "2025-12-29 13:14:15", "GoWeek(ISO, 1) 本年第 1 个 ISO 年周")
+        assert(t, base.GoWeek(ISO, 2), "2026-01-05 13:14:15", "GoWeek(ISO, 2) 本年第 2 个 ISO 年周")
+        assert(t, base.GoWeek(ISO, -1), "2026-12-28 13:14:15", "GoWeek(ISO, -1) 本年最后 1 个 ISO 年周")
+        assert(t, base.GoWeek(ISO, -2), "2026-12-21 13:14:15", "GoWeek(ISO, -2) 本年倒数第 2 个 ISO 年周")
 
         assert(t, base.StartWeek(ISO, 0), "2026-01-19 00:00:00", "StartWeek(ISO, 0)")
         assert(t, base.StartWeek(ISO, 1), "2025-12-29 00:00:00", "StartWeek(ISO, 1)")
@@ -137,63 +137,57 @@ func TestWeeksNavigation(t *testing.T) {
 
     t.Run("Week_Ord", func(t *testing.T) {
         assert(t, base.GoWeek(Ord, 0), "2026-01-21 13:14:15", "GoWeek(Ord, 0) 当前时间")
-        assert(t, base.GoWeek(Ord, 1), "2026-01-01 13:14:15", "GoWeek(Ord, 1) 本月1日")
-        assert(t, base.GoWeek(Ord, 2), "2026-01-08 13:14:15", "GoWeek(Ord, 2) 本月第2周期起点")
-        assert(t, base.GoWeek(Ord, -1), "2026-01-31 13:14:15", "GoWeek(Ord, -1) 本月最后1天")
-        assert(t, base.GoWeek(Ord, -2), "2026-01-24 13:14:15", "GoWeek(Ord, -2) 本月倒数第2周期终点")
+        assert(t, base.GoWeek(Ord, 1), "2026-01-01 13:14:15", "GoWeek(Ord, 1) 本月 1 日")
+        assert(t, base.GoWeek(Ord, 2), "2026-01-08 13:14:15", "GoWeek(Ord, 2) 本月第 2 周开始")
+        assert(t, base.GoWeek(Ord, -1), "2026-01-31 13:14:15", "GoWeek(Ord, -1) 本月最后 1 天")
+        assert(t, base.GoWeek(Ord, -2), "2026-01-24 13:14:15", "GoWeek(Ord, -2) 本月倒数第 2 周结束")
 
         assert(t, base.StartWeek(Ord, 0), "2026-01-19 00:00:00", "StartWeek(Ord, 0) 本周期起点")
-        assert(t, base.StartWeek(Ord, 1), "2026-01-01 00:00:00", "StartWeek(Ord, 1) 本月1日")
-        assert(t, base.StartWeek(Ord, 2), "2026-01-08 00:00:00", "StartWeek(Ord, 2) 本月第2周期起点")
-        assert(t, base.StartWeek(Ord, -1), "2026-01-25 00:00:00", "StartWeek(Ord, -1) 本月最后周期起点")
-        assert(t, base.StartWeek(Ord, -2), "2026-01-18 00:00:00", "StartWeek(Ord, -2) 本月倒数第2周期起点")
+        assert(t, base.StartWeek(Ord, 1), "2026-01-01 00:00:00", "StartWeek(Ord, 1) 本月 1 日")
+        assert(t, base.StartWeek(Ord, 2), "2026-01-08 00:00:00", "StartWeek(Ord, 2) 本月第 2 周开始")
+        assert(t, base.StartWeek(Ord, -1), "2026-01-25 00:00:00", "StartWeek(Ord, -1) 本月最后周开始")
+        assert(t, base.StartWeek(Ord, -2), "2026-01-18 00:00:00", "StartWeek(Ord, -2) 本月倒数第 2 周开始")
 
-        assert(t, base.EndWeek(Ord, 0), "2026-01-25 23:59:59.999999999", "EndWeek(Ord, 0) 本周期终点")
-        assert(t, base.EndWeek(Ord, 1), "2026-01-07 23:59:59.999999999", "EndWeek(Ord, 1) 本月第1周期终点")
-        assert(t, base.EndWeek(Ord, 2), "2026-01-14 23:59:59.999999999", "EndWeek(Ord, 2) 本月第2周期终点")
-        assert(t, base.EndWeek(Ord, -1), "2026-01-31 23:59:59.999999999", "EndWeek(Ord, -1) 本月最后1天")
-        assert(t, base.EndWeek(Ord, -2), "2026-01-24 23:59:59.999999999", "EndWeek(Ord, -2) 本月倒数第2周期终点")
+        assert(t, base.EndWeek(Ord, 0), "2026-01-25 23:59:59.999999999", "EndWeek(Ord, 0) 本周结束")
+        assert(t, base.EndWeek(Ord, 1), "2026-01-07 23:59:59.999999999", "EndWeek(Ord, 1) 本月第 1 周结束")
+        assert(t, base.EndWeek(Ord, 2), "2026-01-14 23:59:59.999999999", "EndWeek(Ord, 2) 本月第 2 周结束")
+        assert(t, base.EndWeek(Ord, -1), "2026-01-31 23:59:59.999999999", "EndWeek(Ord, -1) 本月最后 1 天")
+        assert(t, base.EndWeek(Ord, -2), "2026-01-24 23:59:59.999999999", "EndWeek(Ord, -2) 本月倒数第 2 周结束")
     })
 
     t.Run("Week_Qtr", func(t *testing.T) {
-        assert(t, base.GoWeek(Qtr, 0), "2026-01-21 13:14:15", "GoWeek(Qtr, 0) Current")
-        assert(t, base.GoWeek(Qtr, 1), "2026-01-07 13:14:15", "GoWeek(Qtr, 1) Q1 Week 1 (Wed)")
-        assert(t, base.GoWeek(Qtr, 2), "2026-01-14 13:14:15", "GoWeek(Qtr, 2) Q1 Week 2 (Wed)")
-        assert(t, base.GoWeek(Qtr, -1), "2026-04-01 13:14:15", "GoWeek(Qtr, -1) Q1 Last Week (Wed)")
-        assert(t, base.GoWeek(Qtr, -2), "2026-03-25 13:14:15", "GoWeek(Qtr, -2) Q1 2nd Last Week (Wed)")
+        assert(t, base.GoWeek(Qtr, 0), "2026-01-21 13:14:15", "GoWeek(Qtr, 0) 当前时间")
+        assert(t, base.GoWeek(Qtr, 1), "2026-01-07 13:14:15", "GoWeek(Qtr, 1) 本季度第 1 周")
+        assert(t, base.GoWeek(Qtr, 2), "2026-01-14 13:14:15", "GoWeek(Qtr, 2) 本季度第 2 周")
+        assert(t, base.GoWeek(Qtr, -1), "2026-04-01 13:14:15", "GoWeek(Qtr, -1) 本季度最后 1 周")
+        assert(t, base.GoWeek(Qtr, -2), "2026-03-25 13:14:15", "GoWeek(Qtr, -2) 本季度倒数第 2 周")
 
         assert(t, base.StartWeek(Qtr, 0), "2026-01-19 00:00:00", "StartWeek(Qtr, 0) 本周期起点")
-        assert(t, base.StartWeek(Qtr, 1), "2026-01-01 00:00:00", "StartWeek(Qtr, 1)")
-        assert(t, base.StartWeek(Qtr, 2), "2026-01-08 00:00:00", "StartWeek(Qtr, 2)")
-        assert(t, base.StartWeek(Qtr, -1), "2026-03-30 00:00:00", "StartWeek(Qtr, -1)")
-        assert(t, base.StartWeek(Qtr, -2), "2026-03-23 00:00:00", "StartWeek(Qtr, -2)")
+        assert(t, base.StartWeek(Qtr, 1), "2026-01-01 00:00:00", "StartWeek(Qtr, 1) 本季度第 1 周开始")
+        assert(t, base.StartWeek(Qtr, 2), "2026-01-08 00:00:00", "StartWeek(Qtr, 2) 本季度第 2 周开始")
+        assert(t, base.StartWeek(Qtr, -1), "2026-03-30 00:00:00", "StartWeek(Qtr, -1) 本季度最后 1 周开始")
+        assert(t, base.StartWeek(Qtr, -2), "2026-03-23 00:00:00", "StartWeek(Qtr, -2) 本季度倒数第 2 周开始")
 
         assert(t, base.EndWeek(Qtr, 0), "2026-01-25 23:59:59.999999999", "EndWeek(Qtr, 0) 本周期终点")
-        assert(t, base.EndWeek(Qtr, 1), "2026-01-07 23:59:59.999999999", "EndWeek(Qtr, 1)")
-        assert(t, base.EndWeek(Qtr, 2), "2026-01-14 23:59:59.999999999", "EndWeek(Qtr, 2)")
-        assert(t, base.EndWeek(Qtr, -1), "2026-04-05 23:59:59.999999999", "EndWeek(Qtr, -1)")
-        assert(t, base.EndWeek(Qtr, -2), "2026-03-29 23:59:59.999999999", "EndWeek(Qtr, -2)")
+        assert(t, base.EndWeek(Qtr, 1), "2026-01-07 23:59:59.999999999", "EndWeek(Qtr, 1) 本季度第 1 周结束")
+        assert(t, base.EndWeek(Qtr, 2), "2026-01-14 23:59:59.999999999", "EndWeek(Qtr, 2) 本季度第 2 周结束")
+        assert(t, base.EndWeek(Qtr, -1), "2026-04-05 23:59:59.999999999", "EndWeek(Qtr, -1) 本季度最后 1 周结束")
+        assert(t, base.EndWeek(Qtr, -2), "2026-03-29 23:59:59.999999999", "EndWeek(Qtr, -2) 本季度倒数第 2 周结束")
     })
 
     t.Run("Week_Qtr_Ord", func(t *testing.T) {
-        // 2026 Q1: Jan 1 (Thu) ~ Mar 31 (Tue)
-        // Strict 7-day cycles. No overflow logic in Week definition.
-
-        // GoWeek (Ord): Jumps to the start of the counting anchor (Start of Q or End of Q).
         assert(t, base.GoWeek(Qtr|Ord, 0), "2026-01-21 13:14:15", "GoWeek(Qtr|Ord, 0) Current")
-        assert(t, base.GoWeek(Qtr|Ord, 1), "2026-01-01 13:14:15", "GoWeek(Qtr|Ord, 1) -> 1")
-        assert(t, base.GoWeek(Qtr|Ord, 2), "2026-01-08 13:14:15", "GoWeek(Qtr|Ord, 2) -> 8")
-        assert(t, base.GoWeek(Qtr|Ord, -1), "2026-03-31 13:14:15", "GoWeek(Qtr|Ord, -1) -> 31")
-        assert(t, base.GoWeek(Qtr|Ord, -2), "2026-03-24 13:14:15", "GoWeek(Qtr|Ord, -2) -> 24")
+        assert(t, base.GoWeek(Qtr|Ord, 1), "2026-01-01 13:14:15", "GoWeek(Qtr|Ord, 1) -> 本季度第 1 个序数周")
+        assert(t, base.GoWeek(Qtr|Ord, 2), "2026-01-08 13:14:15", "GoWeek(Qtr|Ord, 2) -> 本季度第 2 个序数周")
+        assert(t, base.GoWeek(Qtr|Ord, -1), "2026-03-31 13:14:15", "GoWeek(Qtr|Ord, -1) -> 本季度最后 1 天")
+        assert(t, base.GoWeek(Qtr|Ord, -2), "2026-03-24 13:14:15", "GoWeek(Qtr|Ord, -2) -> 从本季度末尾开始倒数的第 2 个序数周")
 
-        // StartWeek
         assert(t, base.StartWeek(Qtr|Ord, 0), "2026-01-19 00:00:00", "StartWeek(Qtr|Ord, 0)")
         assert(t, base.StartWeek(Qtr|Ord, 1), "2026-01-01 00:00:00", "StartWeek(Qtr|Ord, 1)")
         assert(t, base.StartWeek(Qtr|Ord, 2), "2026-01-08 00:00:00", "StartWeek(Qtr|Ord, 2)")
         assert(t, base.StartWeek(Qtr|Ord, -1), "2026-03-25 00:00:00", "StartWeek(Qtr|Ord, -1)")
         assert(t, base.StartWeek(Qtr|Ord, -2), "2026-03-18 00:00:00", "StartWeek(Qtr|Ord, -2)")
 
-        // EndWeek (Start + 6 days)
         assert(t, base.EndWeek(Qtr|Ord, 0), "2026-01-25 23:59:59.999999999", "EndWeek(Qtr|Ord, 0)")
         assert(t, base.EndWeek(Qtr|Ord, 1), "2026-01-07 23:59:59.999999999", "EndWeek(Qtr|Ord, 1)")
         assert(t, base.EndWeek(Qtr|Ord, 2), "2026-01-14 23:59:59.999999999", "EndWeek(Qtr|Ord, 2)")
@@ -202,38 +196,30 @@ func TestWeeksNavigation(t *testing.T) {
     })
 
     t.Run("Week_Ord_Day", func(t *testing.T) {
-        // base = 2026-01-21 (周三)，1月31天，序数周期：1-7, 8-14, 15-21, 22-28, 29-31(不完整)
-        // 负数索引：n=-1 是月末最后一天 (31号)，n=-2 是倒数第2周终点 (24号)
-        // --- 25组级联测试 ---
-        // 1. Week(Ord, 0, x) : 基于当前周期 (15-21), 锚点 15 (周四)
         assert(t, base.GoWeek(Ord, 0, 0), "2026-01-21 13:14:15", "base.GoWeek(Ord, 0, 0) 本周天")
         assert(t, base.GoWeek(Ord, 0, 1), "2026-01-19 13:14:15", "GoWeek(Ord, 0, 1) 本周一")
         assert(t, base.GoWeek(Ord, 0, 2), "2026-01-20 13:14:15", "GoWeek(Ord, 0, 2) 本周二")
         assert(t, base.GoWeek(Ord, 0, -1), "2026-01-25 13:14:15", "GoWeek(Ord, 0, -1) 本周日")
         assert(t, base.GoWeek(Ord, 0, -2), "2026-01-24 13:14:15", "GoWeek(Ord, 0, -2) 本周六")
 
-        // 2. Week(Ord, 1, x) : 第1周期 (01-07), 锚点 01 (周四), 向后搜
         assert(t, base.GoWeek(Ord, 1, 0), "2026-01-01 13:14:15", "第1周期 保持周四 (锚点原地)")
         assert(t, base.GoWeek(Ord, 1, 1), "2026-01-05 13:14:15", "第1周期 找周一 (向后推进)")
         assert(t, base.GoWeek(Ord, 1, 2), "2026-01-06 13:14:15", "第1周期 找周二 (向后推进)")
         assert(t, base.GoWeek(Ord, 1, -1), "2026-01-04 13:14:15", "第1周期 找周日 (负数映射 -> 向后推进)")
         assert(t, base.GoWeek(Ord, 1, -2), "2026-01-03 13:14:15", "第1周期 找周六 (负数映射 -> 向后推进)")
 
-        // 3. Week(Ord, 2, x) : 第2周期 (08-14), 锚点 08 (周四), 向后搜
         assert(t, base.GoWeek(Ord, 2, 0), "2026-01-08 13:14:15", "第2周期 保持周四 (锚点原地)")
         assert(t, base.GoWeek(Ord, 2, 1), "2026-01-12 13:14:15", "第2周期 找周一 (向后推进)")
         assert(t, base.GoWeek(Ord, 2, 2), "2026-01-13 13:14:15", "第2周期 找周二 (向后推进)")
         assert(t, base.GoWeek(Ord, 2, -1), "2026-01-11 13:14:15", "第2周期 找周日 (负数映射 -> 向后推进)")
         assert(t, base.GoWeek(Ord, 2, -2), "2026-01-10 13:14:15", "第2周期 找周六 (负数映射 -> 向后推进)")
 
-        // 4. Week(Ord, -1, x) : 最后周期 (25-31), 锚点 31 (周六), 向前搜
         assert(t, base.GoWeek(Ord, -1, 0), "2026-01-31 13:14:15", "最后周期 保持周六 (锚点原地)")
         assert(t, base.GoWeek(Ord, -1, 1), "2026-01-26 13:14:15", "最后周期 找周一 (向前回溯)")
         assert(t, base.GoWeek(Ord, -1, 2), "2026-01-27 13:14:15", "最后周期 找周二 (向前回溯)")
         assert(t, base.GoWeek(Ord, -1, -1), "2026-01-25 13:14:15", "最后周期 找周日 (负数映射 -> 向前回溯)")
         assert(t, base.GoWeek(Ord, -1, -2), "2026-01-31 13:14:15", "最后周期 找周六 (负数映射 -> 命中锚点)")
 
-        // 5. Week(Ord, -2, x) : 倒数第2周期 (18-24), 锚点 24 (周六), 向前搜
         assert(t, base.GoWeek(Ord, -2, 0), "2026-01-24 13:14:15", "倒数第2周期 保持周六 (锚点原地)")
         assert(t, base.GoWeek(Ord, -2, 1), "2026-01-19 13:14:15", "倒数第2周期 找周一 (向前回溯)")
         assert(t, base.GoWeek(Ord, -2, 2), "2026-01-20 13:14:15", "倒数第2周期 找周二 (向前回溯)")

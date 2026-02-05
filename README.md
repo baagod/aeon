@@ -1,14 +1,8 @@
-> I don't remember exactly when it started. Maybe it was born out of frustration and anger with `time.Time` and existing
-> time libraries. I developed a borderline absurd obsession: **"Why don't I write my own Go time library?"**
+> I can't recall the exact moment it began. Perhaps it stemmed from a dissatisfaction with `time.Time` and existing time libraries—I developed a near-absurd obsession: **Why not write a Go time library myself?**
 >
-> It all began with a crude, perhaps even "ugly" prototype called `thru`. I decided to systematically refactor and
-> rewrite it from the ground up. Countless ideas exploded like fireworks, eventually leading to a metamorphosis across
-> dimensions.
+> In ancient philosophy, Aeon represents "eternity" and "layered dimensions."
 >
-> I named it **Aeon**. In ancient philosophy, Aeon represents "eternity" and "layered dimensions".
->
-> I chose this name because it represents the truer logic of time—time is not a thin, linear line; it is a flowing
-> universe that can be nested and penetrated.
+> I chose this name because I want to express a different logic of time—time is not a slender straight line; it is a flowing universe that can be nested and penetrated.
 
 # Aeon
 
