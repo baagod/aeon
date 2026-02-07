@@ -213,7 +213,7 @@ func applyAbs(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w, sw time.
             }
         } else if c.isoWeek {
             // ISO 年周：遵循 ISO 8601
-            if n == 0 { // 回到本周周首
+            if n == 0 { // 回到周首
                 d -= int(w-sw+7) % 7
                 break
             }
@@ -223,21 +223,22 @@ func applyAbs(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w, sw time.
             if m, d = 1, 1; n < 0 {
                 m, d = 12, 31
             }
+
             if d = 4; n < 0 { // ISO 正向锚点是1月4日
                 d = 28 // ISO 负向锚点是12月28日（保证在最后一周内）
             }
 
-            // 从锚点对齐到周首
+            // 从锚点对齐到周首，再加上周偏移。
             wAnchor := weekday(y, m, d)
-            d -= int(wAnchor-sw+7) % 7
-
-            // 加上周偏移
-            if n > 0 {
+            if d -= int(wAnchor-sw+7) % 7; n > 0 {
                 d += (n - 1) * 7
             } else {
                 d += (n + 1) * 7
             }
-            // ISO 周：Go 模式不恢复周内偏移，直接返回周首
+
+            if c.goMode { // Go 模式：恢复周内偏移，保持当前星期几。
+                d += int(w-sw+7) % 7
+            }
         } else { // 日历周 (默认)
             if n > 0 {
                 d = 1 + (n-1)*7
@@ -255,22 +256,23 @@ func applyAbs(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w, sw time.
         // n > 0: 周内第 n 天
         // n < 0: 周内倒数第 n 天
         // n = 0: 保持当前星期几不变
-        if n != 0 {
-            // 识别是否处于 Week 的序数周级联中
-            if c.ordWeek && p == Week && pN != 0 {
-                // 🦬 预平移坐标参考系：
-                // 如果 n < 0，将参考点向左拨 1 天，让 0-6 索引与序数意图完美重合。
-                if cur := int(weekday(y, m, d+(n>>63))); pN >= 0 {
-                    d += (n - cur + 7) % 7
-                } else {
-                    d -= (cur - n + 7) % 7
-                }
+        if n == 0 {
+            break
+        }
+        // 识别是否处于 Week 的序数周级联中
+        if c.ordWeek && p == Week && pN != 0 {
+            // 🦬 预平移坐标参考系：
+            // 如果 n < 0，将参考点向左拨 1 天，让 0-6 索引与序数意图完美重合。
+            if d = int(weekday(y, m, d+n>>63)); pN >= 0 {
+                d += (n - 7) % 7
             } else {
-                if d -= int(w-sw+7) % 7; n > 0 {
-                    d += n - 1
-                } else {
-                    d += n + 7
-                }
+                d -= (n + 7) % 7
+            }
+        } else {
+            if d -= int(w-sw+7) % 7; n > 0 {
+                d += n - 1
+            } else {
+                d += n + 7
             }
         }
     case Day:
