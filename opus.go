@@ -227,17 +227,17 @@ func applyAbs(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w, sw time.
                 d = 28 // ISO 负向锚点是12月28日（保证在最后一周内）
             }
 
-            // 从锚点对齐到周首
+            // 从锚点对齐到周首，再加上周偏移。
             wAnchor := weekday(y, m, d)
-            d -= int(wAnchor-sw+7) % 7
-
-            // 加上周偏移
-            if n > 0 {
+            if d -= int(wAnchor-sw+7) % 7; n > 0 {
                 d += (n - 1) * 7
             } else {
                 d += (n + 1) * 7
             }
-            // ISO 周：Go 模式不恢复周内偏移，直接返回周首
+
+            if c.goMode { // Go 模式：恢复周内偏移，保持当前星期几。
+                d += int(w-sw+7) % 7
+            }
         } else { // 日历周 (默认)
             if n > 0 {
                 d = 1 + (n-1)*7
