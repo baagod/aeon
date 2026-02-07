@@ -100,43 +100,43 @@ This was my breaking point. I realized I didn't just want a better API — I wan
 And so, Aeon was born.
 
 ```bash
-Benchmark       | ns/op | allocs/op x B/op | up
+Benchmark       | ns/op | allocs x B/op | speedup
 
-New             |
-Aeon            | 18.6 | 0 | x74
-Carbon          | ████████████████████████████████████████ 1376 | 13x1600
+New             
+Aeon            | 18.6  | 0             | x74
+Carbon          | 1376  | 13x1600
 
-Now             |
-Aeon            | 7.8 | 0 | x177
-Carbon          | ████████████████████████████████████████ 1384 | 13x1600
+Now             
+Aeon            | 7.8   | 0             | x177
+Carbon          | 1384  | 13x1600
 
-From Unix       |
-Aeon            | 3.6 | 0 | x383
-Carbon          | ████████████████████████████████████████ 1380 | 13x1600
+From Unix       
+Aeon            | 3.6   | 0             | x383
+Carbon          | 1380  | 13x1600
 
-From Std        |
-Aeon            | 5.0 | 0 | x323
-Carbon          | ████████████████████████████████████████ 1619 | 13x1600
+From Std        
+Aeon            | 5.0   | 0             | x323
+Carbon          | 1619  | 13x1600
 
-Parse (Compact) |
-Aeon            | 23.3 | 0 | x195
-Carbon          | ████████████████████████████████████████ 4561 | 85x3922
+Parse (Compact) 
+Aeon            | 23.3  | 0             | x195
+Carbon          | 4561  | 85x3922
 
-Parse (ISO)     |
-Aeon            | 19.6 | 0 | x91
-Carbon          | ████████████████████████████████████████ 1794 | 15x1697
+Parse (ISO)     
+Aeon            | 19.6  | 0             | x91
+Carbon          | 1794  | 15x1697
 
-Start/End       |
-Aeon            | █ 56.4 | 0 | x20
-Carbon          | ████████████████████ 1141 | 7x1440
+Start / End     
+Aeon            | 56.4  | 0             | x20
+Carbon          | 1141  | 7x1440
 
-Add (Offset)    |
-Aeon            | █ 56.5 | 0 | x2.5
-Carbon          | ██ 142 | 2x128
+Add (Offset)    
+Aeon            | 56.5  | 0             | x2.5
+Carbon          | 142   | 2x128
 
-Set (Position)  |
-Aeon            | █ 58.7 | 0 | x2.6
-Carbon          | ███ 156 | 2x128
+Set (Position)  
+Aeon            | 58.7  | 0             | x2.6
+Carbon          | 156   | 2x128
 ```
 
 > [!NOTE]

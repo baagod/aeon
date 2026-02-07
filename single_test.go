@@ -4,7 +4,7 @@ import (
     "testing"
 )
 
-func TestYearsNavigation(t *testing.T) {
+func TestSingleYears(t *testing.T) {
     // 2021-02-02 13:14:15
     base := New(2021, 2, 2, 13, 14, 15)
 
@@ -57,7 +57,7 @@ func TestYearsNavigation(t *testing.T) {
     assert(t, base.GoYear(-1), "2029-02-02 13:14:15", "GoYear(-1)")
 }
 
-func TestWeeksNavigation(t *testing.T) {
+func TestSingleWeeks(t *testing.T) {
     // 基准日期：2026-01-21(周三)，1月31天 = 4×7+3，序数周期：1-7, 8-14, 15-21, 22-28, 29-31(不完整)
     base := New(2026, 1, 21, 13, 14, 15)
 
@@ -113,14 +113,11 @@ func TestWeeksNavigation(t *testing.T) {
     })
 
     t.Run("Week_ISO", func(t *testing.T) {
-        // 2026-01-21 是周三，ISO 第4周 (1月19日-1月25日)
-        // ISO 8601: 第1周是包含第一个周四的周
-        // 2026年1月1日是周四，所以 ISO 第1周 = 2025-12-29(周一) 到 2026-01-04(周日)
         assert(t, base.GoWeek(ISO, 0), "2026-01-21 13:14:15", "GoWeek(ISO, 0) 当前时间")
-        assert(t, base.GoWeek(ISO, 1), "2025-12-29 13:14:15", "GoWeek(ISO, 1) 本年第 1 个 ISO 年周")
-        assert(t, base.GoWeek(ISO, 2), "2026-01-05 13:14:15", "GoWeek(ISO, 2) 本年第 2 个 ISO 年周")
-        assert(t, base.GoWeek(ISO, -1), "2026-12-28 13:14:15", "GoWeek(ISO, -1) 本年最后 1 个 ISO 年周")
-        assert(t, base.GoWeek(ISO, -2), "2026-12-21 13:14:15", "GoWeek(ISO, -2) 本年倒数第 2 个 ISO 年周")
+        assert(t, base.GoWeek(ISO, 1), "2025-12-31 13:14:15", "GoWeek(ISO, 1) 本年第 1 个 ISO 年周")
+        assert(t, base.GoWeek(ISO, 2), "2026-01-07 13:14:15", "GoWeek(ISO, 2) 本年第 2 个 ISO 年周")
+        assert(t, base.GoWeek(ISO, -1), "2026-12-30 13:14:15", "GoWeek(ISO, -1) 本年最后 1 个 ISO 年周")
+        assert(t, base.GoWeek(ISO, -2), "2026-12-23 13:14:15", "GoWeek(ISO, -2) 本年倒数第 2 个 ISO 年周")
 
         assert(t, base.StartWeek(ISO, 0), "2026-01-19 00:00:00", "StartWeek(ISO, 0)")
         assert(t, base.StartWeek(ISO, 1), "2025-12-29 00:00:00", "StartWeek(ISO, 1)")

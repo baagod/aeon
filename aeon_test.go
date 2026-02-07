@@ -69,10 +69,10 @@ func TestPick(t *testing.T) {
     })
 }
 
-func assert(t *testing.T, actual Time, expected string, name string) {
+func assert(t *testing.T, b Time, e, f string) {
     t.Helper()
-    if actual.String() != expected {
-        t.Errorf("%s: got [%s], want [%s]", name, actual, expected)
+    if b.String() != e {
+        t.Errorf("%s: got [%s], want [%s]", f, b, e)
     }
 }
 
