@@ -142,9 +142,9 @@ Carbon          | 156   | 2x128
 
 > [!NOTE]
 >
-> 以上数据在 **未使用** 变长参数的单一原子操作下测得。并且 **即使链式调用，仍然 Zero-Alloc。逻辑越复杂，Aeon 的领先倍数就越惊人。**
+> 以上数据在 **未使用** 变长参数的单一原子操作下测得。**即使链式调用，仍然 Zero-Alloc，逻辑越复杂，Aeon 的领先倍数就越惊人。**
 
-> 如果你只想快速认识该库，那么到这里就可以结束了。你可以查看 [Aeon](https://github.com/baagod/aeon) 和它的 [完整文档](https://zread.ai/baagod/aeon/1-overview) 了解更多。衷心感激您的支持！
+> 如果你只想快速认识该库，那么到这里就可以结束了，你可以查看 [Aeon](https://github.com/baagod/aeon) 和它的 [完整文档](https://zread.ai/baagod/aeon/1-overview) 了解更多。衷心感激您的支持！
 
 然而，如果你还想看看 Aeon 是如何通过一步步演进、构思及诞生的，请继续。
 

@@ -70,6 +70,7 @@ const (
 
 var (
     offsetZone = &ZoneCache[int]{cache: make(map[int]*time.Location, 100)}
+    namedZone  = &ZoneCache[string]{cache: make(map[string]*time.Location, 100)}
     fixedZone  = &ZoneCache[zoneKey]{cache: make(map[zoneKey]*time.Location, 100)}
 )
 
@@ -78,19 +79,22 @@ type zoneKey struct {
     offset int
 }
 
-type ZoneCache[K int | zoneKey] struct {
+type ZoneCache[K int | string | zoneKey] struct {
     sync.RWMutex
     cache map[K]*time.Location
 }
 
 func (c *ZoneCache[K]) Get(name string, k K) (loc *time.Location) {
-    // 获取偏移量
-    var off int
+    // 获取偏移量、是否命名时区
+    off, named := 0, false
+
     switch v := any(k).(type) {
     case zoneKey:
         off = v.offset
     case int:
         off = v
+    case string:
+        named = true
     }
 
     if off == 0 {
@@ -124,22 +128,33 @@ func (c *ZoneCache[K]) Get(name string, k K) (loc *time.Location) {
         return
     }
 
-    loc = time.FixedZone(name, off)
+    if named {
+        if loc, _ = time.LoadLocation(name); loc == nil {
+            loc = &time.Location{}
+        }
+    } else {
+        loc = time.FixedZone(name, off)
+    }
+
     c.cache[k] = loc
     return
 }
 
-// NewZone 返回指定时区
-// name: 时区名称，offset: 固定偏移小时数
-func NewZone(name string, offset ...int) *time.Location {
+// Zone 返回指定名称和偏移量的时区
+func Zone(name string, offset ...int) *time.Location {
     var off int
     if len(offset) != 0 {
         off = offset[0]
     }
-    return fixedZone.Get(name, zoneKey{name: name, offset: off})
-}
 
-// NewOffset 返回指定秒数偏移的固定时区
-func NewOffset(offset int) *time.Location {
-    return offsetZone.Get("", offset)
+    if name == "" { // offset
+        return offsetZone.Get("", off)
+    }
+
+    if off == 0 { // named
+        return namedZone.Get(name, name)
+    }
+
+    // named & offset: fixed
+    return fixedZone.Get(name, zoneKey{name: name, offset: off})
 }

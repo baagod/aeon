@@ -263,10 +263,10 @@ func applyAbs(c Flag, u, p Unit, n, pN, y, m, d, h, mm, sec, ns int, w, sw time.
         if c.ordWeek && p == Week && pN != 0 {
             // 🦬 预平移坐标参考系：
             // 如果 n < 0，将参考点向左拨 1 天，让 0-6 索引与序数意图完美重合。
-            if d = int(weekday(y, m, d+n>>63)); pN >= 0 {
-                d += (n - 7) % 7
+            if cur := int(weekday(y, m, d+n>>63)); pN >= 0 {
+                d += (n - cur + 7) % 7
             } else {
-                d -= (n + 7) % 7
+                d -= (cur - n + 7) % 7
             }
         } else {
             if d -= int(w-sw+7) % 7; n > 0 {

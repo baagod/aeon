@@ -31,13 +31,13 @@ func ParseE(s string, loc ...*time.Location) (Time, error) {
         sign := int(s[n-6])
         if (sign == '+' || sign == '-') && isDigit2(s, n-5) && isDigit2(s, n-2) {
             offset := p2(s, n-5)*3600 + p2(s, n-2)*60
-            s, l = s[:n-6], NewOffset(offset*(44-sign))
+            s, l = s[:n-6], Zone("", offset*(44-sign))
         }
     } else if n >= 5 { // ±HHmm
         sign := int(s[n-5])
         if (sign == '+' || sign == '-') && isDigit4(s[n-4:]) {
             offset := p2(s, n-4)*3600 + p2(s, n-2)*60
-            s, l = s[:n-5], NewOffset(offset*(44-sign))
+            s, l = s[:n-5], Zone("", offset*(44-sign))
         }
     }
 
