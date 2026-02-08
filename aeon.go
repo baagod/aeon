@@ -21,7 +21,7 @@ type Time struct {
 
 func Aeon(t ...time.Time) Time {
     if len(t) == 0 {
-        t = []time.Time{{}}
+        return Time{weekStarts: DefaultWeekStarts}
     }
     return Time{time: t[0], weekStarts: DefaultWeekStarts}
 }
@@ -53,7 +53,7 @@ func New(y, m, d, h, mm, s int, add ...any) Time {
         case time.Duration:
             ns = int(v.Nanoseconds())
         case string:
-            l = NewZone(v)
+            l = Zone(v)
         default:
         }
     }

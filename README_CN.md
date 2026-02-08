@@ -10,7 +10,7 @@
 
 🇨🇳 [中文](README_CN.md) | 🇺🇸 [English](README.md)
 
-> Aeon 是一个基于 **时间容器** 索引的 Go 时间导航库，用结构化导航替代线性计算，以更贴近人类时间直觉的方式表达复杂时间意图。
+> Aeon 是一个 **零分配（Zero-Alloc）** 的 Go 时间库，核心基于 **时间容器** 理论，用 **级联导航** 代替传统线性计算，以更贴近人类直觉的方式表达复杂时间的意图。
 
 🎬 [视频讲解](https://www.bilibili.com/video/BV1vrrbBGEzN)
 
@@ -212,4 +212,135 @@ leap := NewDate(2024, 2, 29)
 leap.ByYear(1) // 2025-02-28 (保护)
 leap.ByYear(Overflow, 1) // 2025-03-01 (溢出：跨月)
 leap.ByYear(4)           // 2028-02-29 (下一个闰年)
+```
+
+---
+
+## 🧰 核心 API
+
+### 创建时间
+
+```go
+// 指定一个 time.Time（可选）创建时间
+Aeon(t ...time.Time) Time
+
+// 指定一个 loc（可选）创建当前时间
+Now(loc ...*time.Location) Time
+
+// 精确创建时间（y, m, d, h, mm, s），可选纳秒/时区
+New(y, m, d, h, mm, int, add ...any) Time
+
+// 从时间戳创建（自动识别秒/毫秒/微秒/纳秒）
+Unix(int64, ...*time.Location) Time
+
+// 解析时间字符串（忽略错误）
+Parse(string, ...*time.Location) Time
+
+// 解析时间字符串（返回 error）
+ParseE(string, ...*time.Location) (Time, error)
+
+// 指定 layout 解析（忽略错误）
+ParseBy(layout, value string, loc ...*time.Location) Time
+
+// 指定 layout 解析（返回 error）
+ParseByE(layout, value string, loc ...*time.Location) (Time, error)
+```
+
+### 获取时间
+
+```go
+t.Year() int                       // 年
+t.Month() int                      // 月 (1-12)
+t.Day() int                        // 日 (1-31)
+t.Hour() int                       // 时 (0-23)
+t.Minute() int                     // 分 (0-59)
+t.Second() int                     // 秒 (0-59)
+t.Milli() int                      // 毫秒 (0-999)
+t.Micro() int                      // 微秒 (0-999999)
+t.Nano() int                       // 纳秒 (0-999999999)
+t.Clock() (h, mm, s int)           // 时、分、秒
+t.Weekday() time.Weekday           // 星期几
+t.ISOWeek() (year, week int)       // ISO 周数
+t.YearDay() int                    // 一年中第几天 (1-365/366)
+t.YearDays() int                   // 本年总天数
+t.Days() int                       // 本月总天数
+t.Unix(n ...int) int64             // 时间戳，n 指定精度位数
+t.Time() time.Time                 // 转标准库
+t.Location() *time.Location        // 时区
+t.Zone() (name string, offset int) // 时区名称和偏移（秒）
+```
+
+### 比较判断
+
+```go
+t.Lt(u Time) bool          // t < u
+t.Gt(u Time) bool          // t > u
+t.Eq(u Time) bool          // t == u
+t.Compare(u Time) int      // -1 / 0 / 1
+
+t.IsSame(u Unit, target Time) bool        // 是否同单位（年/月/日等）
+t.Between(start, end Time, bound ...byte) bool  // 是否在区间内
+// bound: '=' 全含, '!' 全不含, '[' 左含, ']' 右含
+
+t.Diff(u Time, unit string, abs ...bool) float64
+// unit: "y"年, "M"月, "d"日, "h"时, "m"分, "s"秒
+// abs: true 返回绝对值
+
+t.Sub(u Time) time.Duration  // t - u
+t.Until() time.Duration      // t - Now()
+```
+
+### 极值选择
+
+```go
+Pick(op byte, times ...Time) Time
+// op: '>' 最大值, '<' 最小值, '-' 最近, '+' 最远
+```
+
+### 时区转换
+
+```go
+t.UTC() Time                         // UTC 时间
+t.Local() Time                       // 本地时间
+t.To(loc *time.Location) Time        // 指定时区
+t.WithWeekStarts(w time.Weekday) Time // 设置周起始日
+```
+
+### 工具函数
+
+```go
+IsLeapYear(y int) bool      // 是否闰年
+IsLongYear(y int) bool      // 是否 ISO 长年（53 周）
+DaysIn(y int, m ...int) int // y 年 m 月天数，m 省略则返回年天数
+
+t.IsLeapYear() bool   // 是否闰年
+t.IsLongYear() bool   // 是否 ISO 长年
+t.IsWeekend() bool    // 是否周末
+t.IsAM() bool         // 是否上午
+t.IsDST() bool        // 是否夏令时
+t.IsZero() bool       // 是否零值
+t.ZeroOr(u Time) Time // 零值时返回 u
+```
+
+### 格式化
+
+```go
+t.String() string                 // 默认格式
+t.Format(layout string) string    // 自定义格式
+t.ToString(f ...string) string    // 自定义格式（简写）
+t.AppendFormat(b []byte, layout string) []byte
+```
+
+### 时区
+
+```go
+// 常量时区（70+ 个 IANA 时区）
+const (
+    UTC, Local, CET, EET, EST, GMT, MET, MST, WET
+    Shanghai, Tokyo, NewYork, London, Paris, Berlin, Moscow
+    // ...
+)
+
+// 返回指定名称和偏移量的时区
+Zone(string, ...int) *time.Location
 ```

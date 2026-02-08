@@ -10,14 +10,11 @@
 
 🇨🇳 [中文](README_CN.md) | 🇺🇸 [English](README.md)
 
-> Aeon is a **Zero-Allocation** time navigation library for Go based on **Time Containers**. It replaces linear
-> calculation with structured navigation, expressing complex time intentions in a way that aligns with human intuition.
+> Aeon is a **Zero-Allocation** time navigation library for Go based on **Time Container** theory. It replaces linear calculation with structured navigation, expressing complex time intentions in a way that aligns with human intuition.
 
 ## 🚀 Performance: A Dimensional Blow
 
-Aeon achieves **True Zero Allocation** (Zero Alloc) and leverages a **Cascading Addressing** architecture. Whether you
-span multiple dimensions (from Millennium to Nanosecond), Aeon completes the operation in a **single atomic step**. The
-more complex the logic, the more staggering Aeon's lead becomes.
+Aeon achieves **True Zero Allocation** (Zero Alloc) and leverages a **Cascading Addressing** architecture. Whether you span multiple dimensions (from Millennium to Nanosecond), Aeon completes the operation in a **single atomic step**. The more complex the logic, the more staggering Aeon's lead becomes.
 
 > [!NOTE]
 > The following baseline data were obtained under single-atom operations without **using** cascade parameters.
@@ -70,11 +67,9 @@ go get github.com/baagod/aeon
 
 ## 🧊 Core Concept: Containers
 
-The core of Aeon is **Container Offset**. All **navigation** is essentially indexing within the **Parent Container** of
-the current unit (starting from `0`). For example:
+The core of Aeon is **Container Offset**. All **navigation** is essentially indexing within the **Parent Container** of the current unit (starting from `0`). For example:
 
-- **`GoYear(5)`**: Not going to the year 5 AD, but indexing to the **5th year** within the **current Decade** (the
-  parent container) ➜ `···5`.
+- **`GoYear(5)`**: Not going to the year 5 AD, but indexing to the **5th year** within the **current Decade** (the parent container) ➜ `···5`.
 - **`GoDecade(2)`**: Indexing to the **2nd Decade** of the **current Century** ➜ `··2·`.
 - **`GoCentury(0)`**: Indexing to the **0th Century** of the **current Millennium** ➜ `·0··`.
 
@@ -133,8 +128,7 @@ Combined with `Start/End` prefixes to hit time boundaries:
 
 ### ♾️ Cascading Parameters
 
-Method chaining? No, this is **Atomic Operation**! All methods support **Variadic Parameters** that cascade downwards.
-Parameters flow like water, completing complex positioning in **one line of code**.
+Method chaining? No, this is **Atomic Operation**! All methods support **Variadic Parameters** that cascade downwards. Parameters flow like water, completing complex positioning in **one line of code**.
 
 Aeon automatically switches between 4 cascading sequences based on the **<u>Entry Unit</u>**:
 
@@ -199,13 +193,11 @@ StartYear() / EndYear()
 EndInMonth(1, -1)
 ```
 
-*Negative numbers are not just subtraction; they are **Reverse Indexing**, representing the **"N-th from last"** item in
-the container.*
+*Negative numbers are not just subtraction; they are **Reverse Indexing**, representing the **"N-th from last"** item in the container.*
 
 ### 🛡️ Overflow Protection
 
-Aeon's core philosophy is **Intention First**. By default, navigation protects against day overflow for units **"Month
-and above"**.
+Aeon's core philosophy is **Intention First**. By default, navigation protects against day overflow for units **"Month and above"**.
 
 ```go
 base := NewDate(2025, 1, 31)
@@ -218,4 +210,133 @@ leap := NewDate(2024, 2, 29)
 leap.ByYear(1) // 2025-02-28 (Protected)
 leap.ByYear(Overflow, 1) // 2025-03-01 (Overflow: Crosses month boundary)
 leap.ByYear(4)           // 2028-02-29 (Next Leap Year)
+```
+
+## 🧰 Core API
+
+### Create Time
+
+```go
+// Create time from optional time.Time(s)
+Aeon(t ...time.Time) Time
+
+// Create current time with optional location
+Now(loc ...*time.Location) Time
+
+// Precisely create time (y, m, d, h, mm, s), with optional nanosecond/location
+New(y, m, d, h, mm, int, add ...any) Time
+
+// Create from timestamp (auto-detects second/milli/micro/nano)
+Unix(int64, ...*time.Location) Time
+
+// Parse time string (ignores error)
+Parse(string, ...*time.Location) Time
+
+// Parse time string (returns error)
+ParseE(string, ...*time.Location) (Time, error)
+
+// Parse with layout (ignores error)
+ParseBy(layout, value string, loc ...*time.Location) Time
+
+// Parse with layout (returns error)
+ParseByE(layout, value string, loc ...*time.Location) (Time, error)
+```
+
+### Get Time
+
+```go
+t.Year() int                       // Year
+t.Month() int                      // Month (1-12)
+t.Day() int                        // Day (1-31)
+t.Hour() int                       // Hour (0-23)
+t.Minute() int                     // Minute (0-59)
+t.Second() int                     // Second (0-59)
+t.Milli() int                      // Millisecond (0-999)
+t.Micro() int                      // Microsecond (0-999999)
+t.Nano() int                       // Nanosecond (0-999999999)
+t.Clock() (h, mm, s int)           // Hour, Minute, Second
+t.Weekday() time.Weekday           // Weekday
+t.ISOWeek() (year, week int)       // ISO Week
+t.YearDay() int                    // Day of Year (1-365/366)
+t.YearDays() int                   // Total Days in Year
+t.Days() int                       // Total Days in Month
+t.Unix(n ...int) int64             // Timestamp, n specifies precision
+t.Time() time.Time                 // Convert to Std Lib
+t.Location() *time.Location        // Location
+t.Zone() (name string, offset int) // Zone Name and Offset (Seconds)
+```
+
+### Compare & Judge
+
+```go
+t.Lt(u Time) bool          // t < u
+t.Gt(u Time) bool          // t > u
+t.Eq(u Time) bool          // t == u
+t.Compare(u Time) int      // -1 / 0 / 1
+
+t.IsSame(u Unit, target Time) bool        // Check if same unit (Year/Month/Day etc.)
+t.Between(start, end Time, bound ...byte) bool  // Check if within interval
+// bound: '=' inclusive, '!' exclusive, '[' left inclusive, ']' right inclusive
+
+t.Diff(u Time, unit string, abs ...bool) float64
+// unit: "y"Year, "M"Month, "d"Day, "h"Hour, "m"Minute, "s"Second
+// abs: true returns absolute value
+
+t.Sub(u Time) time.Duration  // t - u
+t.Until() time.Duration      // t - Now()
+```
+
+### Extremum Selection
+
+```go
+Pick(op byte, times ...Time) Time
+// op: '>' Max, '<' Min, '-' Near, '+' Far
+```
+
+### Zone Conversion
+
+```go
+t.UTC() Time                         // UTC Time
+t.Local() Time                       // Local Time
+t.To(loc *time.Location) Time        // Specific Location
+t.WithWeekStarts(w time.Weekday) Time // Set Week Start Day
+```
+
+### Utility Functions
+
+```go
+IsLeapYear(y int) bool      // Is Leap Year
+IsLongYear(y int) bool      // Is ISO Long Year (53 Weeks)
+DaysIn(y int, m ...int) int // Days in y Year m Month, returns year days if m omitted
+
+t.IsLeapYear() bool   // Is Leap Year
+t.IsLongYear() bool   // Is ISO Long Year
+t.IsWeekend() bool    // Is Weekend
+t.IsAM() bool         // Is AM
+t.IsDST() bool        // Is DST
+t.IsZero() bool       // Is Zero
+t.ZeroOr(u Time) Time // Return u if Zero
+```
+
+### Formatting
+
+```go
+t.String() string                 // Default Format
+t.Format(layout string) string    // Custom Format
+t.ToString(f ...string) string    // Custom Format (Short)
+t.AppendFormat(b []byte, layout string) []byte
+```
+
+### Time Zones
+
+```go
+// Constant Zones (70+ IANA Zones)
+const (
+    UTC, Local, CET, EET, EST, GMT, MET, MST, WET
+    Shanghai, Tokyo, NewYork, London, Paris, Berlin, Moscow
+    // ...
+)
+
+// Return Zone by name and offset
+Zone(string, ...int) *time.Location
 ```
